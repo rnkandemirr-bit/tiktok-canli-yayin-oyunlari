@@ -7,7 +7,7 @@
 |---|------|-----------|-----------|
 | 1 | 🏍️ **Motor Drift Yarışı** | 100 beğeni = yarışa katıl, her gül = +5 güç, Donut = Kawasaki | Godot 4.7 |
 | 2 | 👑 **Kral Merdiveni** (Taht Kavgası) | Gül = 1 basamak çık, Donut = tahta otur | Godot 4.7 (scriptler) |
-| 3 | 💍 **Düğün Konvoyu** | Her izleyici konvoya arabasıyla katılır, Donut = gelin arabası | Node.js + Three.js |
+| 3 | 💍 **Düğün Konvoyu** | 100 beğeni = arabanla katıl, gül = makas atıp öne geç, Donut = gelin arabası | Node.js + Three.js |
 | 4 | 🐺 **Muck TikTok Modu** | Hediyeler oyunda canavar çıkarır (gül = kurt, büyük hediye = Bob ejderhası) | BepInEx mod (C#) + Node.js |
 
 Hepsi TikTok'a aynı yöntemle bağlanır: küçük bir **Node.js köprüsü**
@@ -42,7 +42,7 @@ Köprü klasörlerinde `ayarlar.ornek.json` dosyasını `ayarlar.json` olarak ko
 yarışta hediye = nitro + şahlanma. Hediye/güç ayarları `motorlar.json` içinde.
 
 **Test tuşları:** 1 = gül, 2 = donut, 3 = 100 beğeni, 4 = yarışı hemen başlat.
-**Botlu otomatik deneme:** `godot --path . -- --sahte --lobi=30`
+**Botlu otomatik deneme:** `godot --path . -- --sahte` (sahte beğeni/gül/hediye atar; `--sure=150` = 150 sn sonra kapan)
 
 ## 2️⃣ Kral Merdiveni / Taht Kavgası (`2_KralMerdiveni_TahtKavgasi/`)
 Bu mod, yapımcının Steam oyunu **Mahalle Kaosu**'nun içinde çalışır; burada yalnızca
@@ -59,6 +59,10 @@ Kurallar: ❤️ 200 beğeni = sahneye gir · 🌹 gül = 1 basamak (doluysa bir
    - Sessiz deneme: `?sessiz`
 4. **Araba modeli:** `models/arabalar.glb` dosyası depoda yok (lisans); kendi araç paketini (glb) koy.
    Müzik için `muzik/` klasörüne kendi şarkılarını at.
+
+**Kurallar:** ❤️ 100 beğeni = konvoya katıl · 🌹 gül = makas (şerit değiştirip öndekini geçer) ·
+🥇 birinci = sağdıç · 🍩 Donut = gelin arabası (yeni donut gelirse el değiştirir) · 💬 yorum = araba üstünde balon ·
+🌦️ hava her 2,5 dk'da değişir (gündüz / gün batımı / gece / yağmur / kar).
 
 ## 4️⃣ Muck TikTok Modu (`4_Muck_TikTok/`)
 1. Muck'ı Steam'den kur (ücretsiz, yapımcı: Dani) ve **BepInEx 5** yükle.
