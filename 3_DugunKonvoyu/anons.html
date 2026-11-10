@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<title>Konvoy Anons (kız sesi)</title>
+<style>
+  body{margin:0;background:#2a1030;color:#fff;font:14px "Segoe UI",Arial,sans-serif;display:grid;place-items:center;height:100vh;text-align:center}
+  b{color:#ff80ab} small{opacity:.7;display:block;margin-top:6px}
+</style>
+</head>
+<body>
+<div>🎙️ <b>Konvoy anonsu</b> (Emel sesi)<small id="d">bağlanıyor…</small><small>Bu pencereyi kapatma, küçültebilirsin.</small></div>
+<script>
+// Oyunun anonslarını Microsoft Edge'in Türkçe kadın sesiyle (Emel) okur.
+const d = document.getElementById('d');
+let ws = null, ses = null;
+function sesSec(){
+  const vs = speechSynthesis.getVoices();
+  ses = vs.find(v => /Emel/i.test(v.name)) || vs.find(v => /^tr/i.test(v.lang) && /female|kadın|emel/i.test(v.name)) || vs.find(v => /^tr/i.test(v.lang)) || null;
+  d.textContent = ses ? 'Ses: ' + ses.name.replace(/ - .*/, '') : 'Türkçe ses bulunamadı';
+  hazir();
+}
+speechSynthesis.onvoiceschanged = sesSec; sesSec();
+function hazir(){ if (ws && ws.readyState === 1) ws.send(JSON.stringify({ type: 'ses-hazir', ses: ses ? ses.name : '' })); }
+function konus(m){
+  const u = new SpeechSynthesisUtterance(m.text); u.lang = 'tr-TR'; if (ses) u.voice = ses; u.rate = 1.05; u.pitch = 1.08; u.volume = 1;
+  let bitti = false; const son = () => { if (bitti) return; bitti = true; clearTimeout(g); if (ws && ws.readyState === 1) ws.send(JSON.stringify({ type: 'anons-bitti', id: m.id })); };
+  const g = setTimeout(() => { try { speechSynthesis.cancel(); } catch {} son(); }, 15000);
+  u.onend = son; u.onerror = son; speechSynthesis.speak(u);
+}
+function baglan(){
+  ws = new WebSocket(`ws://${location.host}`);
+  ws.onopen = () => { hazir(); };
+  ws.onclose = () => { d.textContent = 'köprü yok, tekrar deneniyor…'; setTimeout(baglan, 2000); };
+  ws.onmessage = e => { let m; try { m = JSON.parse(e.data); } catch { return; }
+    if (m.type === 'anons') konus(m);
+    else if (m.type === 'hello' && window.__boot && window.__boot !== m.boot) location.reload();
+    if (m.type === 'hello') window.__boot = m.boot; };
+}
+setInterval(hazir, 8000);
+baglan();
+</script>
+</body>
+</html>

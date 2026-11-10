@@ -1,0 +1,111 @@
+MUCK x TIKTOK YAYINI
+====================
+
+ONERILEN: SEN TAM EKRAN OYNA, YAYIN DIKEY GITSIN
+Sen normal tam ekran oynarsin; LIVE Studio dikey yayini iki parcadan kurar:
+ustte hediye paneli (1080x840), altta oyunun ortasi (1080x1080).
+
+1. "Muck Baslat (TikTok)" ile oyunu ac (kopru kendiliginden baslar).
+2. TikTok LIVE Studio'yu ac. Sahne zaten kurulu (2026-11-07'de kuruldu):
+   - "Baglanti" kaynagi = hediye paneli, adres: http://127.0.0.1.nip.io:21213/panel
+     (LIVE Studio 127.0.0.1 / localhost adreslerini kabul etmiyor; nip.io adresi
+     ayni bilgisayara doner.)
+   - "Muck.exe" kaynagi = oyun yakalama, ortasi kirpilmis.
+   Panel, oyun acikken (kopru calisirken) dolar; oyun kapaliysa bos gorunebilir.
+   Bozulursa: Kaynak ekle -> Baglanti -> yukaridaki adres.
+3. Yayini baslat. Panelde durum "Canli" olunca hazir.
+Oyunun icinde yan kartlar artik yok (sadece ortadaki hediye afisi); geri acmak icin
+config dosyasinda [Gorunum] OyunIciKartlar = true.
+
+DIKEY PENCERE MODU (alternatif)
+"Muck Baslat DIKEY (TikTok)": oyun 608x1080 dik pencerede acilir, kartlar ustte oyun altta.
+Kucuk pencerede oynamak zor oldugu icin yukaridaki yontem daha rahat.
+Pencere boyutu: config dosyasinda [Dikey] Genislik / Yukseklik.
+
+BASLATMA
+1. "Muck Baslat DIKEY (TikTok)" (ya da yatay icin "Muck Baslat (TikTok)") kisayoluna cift tikla.
+   Oyun acilinca TikTok koprusu kendiliginden baslar (gorev cubugunda kucuk bir
+   "node" penceresi olarak durur, kapatma). Oyun kapaninca kopru de kapanir.
+2. Tek oyunculu bir oyun baslat.
+3. TikTok LIVE Studio'da Muck penceresini yakala ve yayini baslat.
+4. Sol ustteki panelde "TikTok bagli" yesil yanar. Artik yorum ve hediyeler oyuna duser.
+
+IZLEYICI NE YAPAR (ekranin saginda ve solunda kartlar olarak da gorunur)
+- Yorum / Begeni       -> onun adiyla lil Dave ya da Goblin (30 sn'de bir, ayni anda en fazla 25)
+- Gul (1-4 jeton)      -> Wolf / Fire Dave
+- Parmak kalp (5-9)    -> Wyvern (ucan)
+- Yardim (10-29)       -> inek yagmuru (6 inek, et icin)
+- Donut (30-99)        -> Big Chunk / Gronk (boss)
+- Orta hediye (100-499)-> Guardian / Chief (boss)
+- Buyuk (500+)         -> BOB EJDERHASI
+
+YARATIK GORSELLERI
+Her kartta o hediyenin cikaracagi yaratiklarin resmi gorunur. Mod, oyun her
+basladiginda bunlari oyunun kendi modellerinden ceker ve Yaratik_Gorselleri\
+klasorune PNG olarak da kaydeder (yayin kapagi, video icin kullanabilirsin).
+
+TEST TUSLARI (oyun icinde)
+F5 yorum   F6 Gul   F7 Parmak kalp   F8 Yardim   F9 Donut   F10 Orta hediye   F11 Bob   F12 paneli gizle
+
+Ikonlar: Twemoji graphics by Twitter, Inc. and other contributors, licensed under CC-BY 4.0
+
+AYARLAR
+- TikTok kullanici adi: TikTokKopru\ayarlar.json  ("kullanici")
+- Hediye jeton sinirlari, bekleme sureleri, otomatik kopru:
+  C:\Program Files (x86)\Steam\steamapps\common\Muck\BepInEx\config\zombiavcisi.mucktiktok.cfg
+
+SORUN OLURSA
+- Panel "Kopru kapali" diyorsa: "Kopruyu Elle Baslat.bat" calistir.
+- "TikTok bekleniyor" kalirsa: yayin acik mi? Kullanici adi dogru mu?
+- Mod silinirse: Mod\MuckTikTok.dll dosyasini
+  C:\Program Files (x86)\Steam\steamapps\common\Muck\BepInEx\plugins\ icine kopyala.
+- Online oyunda kullanma; sadece kendi actigin oyunda calisir.
+
+
+==================== KURT HALAYI (orman kampi) ====================
+1) "Halay Baslat.bat" -> kopruyu acar, tarayicida KONTROL PANELINI acar.
+2) Sarkilarini "Halay Sarkilari (klasor)" icine at (mp3/m4a/ogg/wav),
+   kontrol panelinde "Listeyi yenile" -> sarkinin yanindaki "Cal".
+   Tempo (BPM) otomatik bulunur; kurtlar ritme uymazsa "Ritme bas" tusuna davulla birlikte 8 kez bas.
+3) LIVE Studio: Kaynak ekle -> Baglanti -> su adres:
+      http://127.0.0.1.nip.io:21213/halay
+   Bilgisayar zorlanirsa:  http://127.0.0.1.nip.io:21213/halay?kalite=dusuk
+   Guncelleme sonrasi LIVE Studio kaynagini YENILE (sag tik -> yenile).
+   Gece gorunumu icin adresin sonuna ?gece=1 ekle (varsayilan gunduz).
+4) Muzik / orman sesleri yayina gitmezse kontrol panelinde "Ses: Bu sayfada" sec.
+5) YOUTUBE LISTESI: kontrol panelinde en ustteki "YouTube listesi" karti.
+   Liste linki hazir (istersen baska liste linki yapistir) -> "Listeyi cal".
+   Sarki kontrol panelinin oldugu Chrome sekmesinde calar; LIVE Studio bunu
+   bilgisayarin sesinden alir (alttaki hoparlor/masaustu sesi acik olsun).
+   Sonra "Ritmi canli dinle" -> Chrome sorar -> "Sekme sesini de paylas" isaretli -> Paylas.
+   Kurtlar sarkinin temposunu dinleyip hizlanir/yavaslar (her saniye olcer).
+   Cok hizli sarkida yarim tempoda oynayabilirler: BPM kartinda x2 bas.
+   Kontrol paneli sekmesini KAPATMA (muzik ve ritim orada).
+
+KURALLAR (yayinda anlat):
+ - Yorum atmak kimseyi halaya SOKMAZ. Sadece hediyeler sayilir:
+ - GUL (Rose)          -> kurt olup HALAY SIRASINA girer, el ele tutusur.
+ - DONUT (Doughnut)    -> ORTAYA, atesin etrafina gecer: DONUT KAPMACA oynar (halayda degildir).
+     Donutu tutan saniyede +1 puan alir, digerleri kovalar; yakalayan donutu kapar (+3),
+     elinden kapilan bir an sersemler. Yeniden donut atan donutu hemen geri alir.
+     Ortada en fazla 8 kurt olur.
+ - CAY (Turk kahvesi/cay bardagi, ~50 jeton) -> ALFA KURT (damat) ya da LEYDI ALFA (gelin) olur.
+     Yoruma "alfa" ya da "leydi" yazan hangi koltuga oturacagini secer.
+     Secmezse bos koltuga, ikisi de doluysa en uzun oturanin yerine gecer.
+ - Toplam 300 jeton    -> HALAY BASI (kare kirmizi mendili sallar, halayi o yonetir).
+     Koltuk doluysa daha cok jeton atan kapar.
+ - 500 BEGENI atan (toplam, kontrol panelinden degisir) da halaya katilir.
+ - PARA TABANCASI (Money Gun) -> gelin damada PARA SACILIR: kamera yakin planda,
+     havaya banknotlar ucar. Atan halayda yoksa halaya da katilir. Adi panelden degisir.
+ - Diger hediyeler yalnizca jeton listesine eklenir.
+ - Hediye ADLARI kontrol panelindeki "Hediye kurallari" kartindan degisir (virgulle birden fazla).
+   "Son gelen hediyeler" satiri TikTok'un gonderdigi gercek adlari gosterir; tutmuyorsa oraya yaz.
+ - Begeniler coskuyu artirir, ates buyur, kurtlar hizlanir.
+ - DANS (Dabke, 32 vuruslu dongu): ayak vurma + tekme -> el ele derin comelme
+   (halay basi yerde kayar) -> tekme -> sekme ve halay basi bacak supurur -> HOPPA ziplama
+   -> final: bacaklar havaya, hep birlikte son vurus.
+ - Alfa varken 40 sn de bir, yokken 75 sn de bir surü aya ULUR (sesli).
+   Kontrol panelinde "Simdi ulusunlar" ile elle de uluturursun.
+ - "Orman sesleri" kartindan cirt cirt / ates / baykus sesini acip kapatip ayarlarsin.
+ - Kontrol panelindeki Test dugmeleriyle yayina cikmadan deneyebilirsin.
+ - Eski dugun salonu surumu: TikTokKopru\halay\eski_salon klasorunde.

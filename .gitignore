@@ -1,0 +1,11 @@
+node_modules/
+ayarlar.json
+*.log
+.godot/
+*.import
+*.uid
+*.glb
+*.fbx
+*.blend
+muzik/*
+!muzik/.gitkeep

@@ -1,0 +1,186 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Kurt Halayı</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700;900&family=Inter:wght@600;800;900&display=swap" rel="stylesheet">
+<style>
+  :root { --ay: #dfe9ff; --ay2: #8fb0ff; --ates: #ff9a3c; --ates2: #ffcf6a; --altin: #ffd77a; }
+  html, body { margin: 0; height: 100%; background: #03050c; overflow: hidden;
+    font-family: Inter, 'Segoe UI', Arial, sans-serif; color: #fff; }
+  #sahne { position: fixed; left: 0; top: 0; width: 100%; height: 100%; display: block; }
+
+  /* Arayuz 1080x1920 (dikey) tasarlanir, pencereye olceklenir */
+  #ui { position: fixed; left: 50%; top: 0; width: 1080px; height: 1920px; margin-left: -540px;
+    transform-origin: top center; pointer-events: none; }
+
+  #baslik { position: absolute; top: 30px; left: 0; right: 0; text-align: center; }
+  #baslik h1 { margin: 0; font-family: 'Cinzel Decorative', Georgia, serif; font-weight: 900; font-size: 96px;
+    letter-spacing: 4px; line-height: 1;
+    background: linear-gradient(180deg, #ffffff 0%, #dfe9ff 40%, #ffb35a 75%, #ff7a2a 100%);
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+    filter: drop-shadow(0 0 18px rgba(140, 180, 255, .55)) drop-shadow(0 4px 0 rgba(10, 6, 20, .9)); }
+  #baslik .alt { margin-top: 6px; font-size: 28px; font-weight: 800; letter-spacing: 9px; color: #cfdcff;
+    text-shadow: 0 0 12px rgba(255, 140, 60, .8); }
+  #calan { position: absolute; top: 172px; left: 50%; transform: translateX(-50%); max-width: 900px;
+    padding: 8px 26px; border-radius: 40px; background: rgba(6, 10, 22, .72); border: 2px solid rgba(160, 190, 255, .45);
+    font-size: 28px; font-weight: 800; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: #e6edff; }
+  #calan .not { display: inline-block; animation: zipla .5s ease-in-out infinite alternate; color: var(--ates); }
+
+  #cift { position: absolute; top: 244px; left: 40px; right: 40px; display: flex; align-items: center; justify-content: center; }
+  .koltuk { width: 430px; height: 150px; border-radius: 26px; position: relative; display: flex; align-items: center;
+    padding: 0 20px; box-sizing: border-box; background: linear-gradient(135deg, rgba(14, 18, 36, .9), rgba(6, 8, 18, .92));
+    border: 3px solid rgba(160, 180, 220, .55); box-shadow: 0 0 26px rgba(120, 160, 255, .3), inset 0 0 22px rgba(120, 160, 255, .12); }
+  .koltuk.dolu { border-color: var(--altin); box-shadow: 0 0 44px rgba(255, 210, 110, .7), inset 0 0 26px rgba(255, 210, 110, .22); }
+  #kGelin.dolu { border-color: #cfe0ff; box-shadow: 0 0 44px rgba(150, 200, 255, .8), inset 0 0 26px rgba(150, 200, 255, .25); }
+  .koltuk .rozet { position: absolute; top: -22px; left: 50%; transform: translateX(-50%); padding: 4px 20px;
+    border-radius: 20px; font-size: 24px; font-weight: 900; letter-spacing: 2px; white-space: nowrap;
+    background: linear-gradient(180deg, #ffe7a3, #c9962e); color: #2a1400; }
+  #kGelin .rozet { background: linear-gradient(180deg, #ffffff, #9fb8ff); color: #0e1a3a; }
+  .koltuk img, .koltuk .bos { width: 104px; height: 104px; border-radius: 50%; border: 4px solid var(--altin); flex: 0 0 104px;
+    object-fit: cover; background: #121a30; display: flex; align-items: center; justify-content: center; font-size: 54px; box-sizing: border-box; }
+  #kGelin img, #kGelin .bos { border-color: #cfe0ff; }
+  .koltuk .yazi { margin-left: 18px; min-width: 0; flex: 1; }
+  .koltuk .ad { font-size: 34px; font-weight: 900; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: #f3f6ff; }
+  .koltuk .fiyat { margin-top: 6px; font-size: 23px; font-weight: 800; color: #ffcf6a; }
+  #cift .ay { font-size: 64px; margin: 0 14px; filter: drop-shadow(0 0 18px rgba(200, 220, 255, .95)); animation: atis 1.2s ease-in-out infinite; }
+
+  /* halay basi: ayri kategori, ates renkli genis serit */
+  #basi { position: absolute; top: 424px; left: 50%; transform: translateX(-50%); }
+  #kBasi { width: 640px; height: 108px; border-color: rgba(255, 120, 60, .7);
+    background: linear-gradient(90deg, rgba(60, 12, 4, .9), rgba(24, 6, 2, .92)); box-shadow: 0 0 30px rgba(255, 110, 40, .45); }
+  #kBasi.dolu { border-color: #ffb347; box-shadow: 0 0 46px rgba(255, 130, 40, .85), inset 0 0 24px rgba(255, 150, 60, .25); }
+  #kBasi .rozet { background: linear-gradient(180deg, #ffd27a, #e2541c); color: #2a0800; top: -20px; font-size: 22px; }
+  #kBasi img, #kBasi .bos { width: 80px; height: 80px; flex: 0 0 80px; font-size: 42px; border-color: #ff9a3c; }
+  #kBasi .ad { font-size: 30px; }
+  #kBasi .fiyat { font-size: 21px; margin-top: 2px; }
+
+  #kayan { position: absolute; top: 556px; left: 50%; transform: translateX(-50%); padding: 10px 30px; border-radius: 40px;
+    background: linear-gradient(90deg, rgba(40, 70, 160, .88), rgba(200, 80, 20, .88)); font-size: 30px; font-weight: 900;
+    white-space: nowrap; box-shadow: 0 0 26px rgba(120, 150, 255, .5); }
+  #kayan span { display: inline-block; transition: opacity .35s, transform .35s; }
+
+  .kart { background: rgba(6, 9, 20, .74); border: 2px solid rgba(160, 190, 255, .4); border-radius: 22px; padding: 14px 18px; }
+  .kbas { font-size: 24px; font-weight: 900; letter-spacing: 3px; color: var(--ates2); margin-bottom: 8px; }
+  #sol { position: absolute; top: 640px; left: 30px; width: 300px; }
+  .bar { height: 22px; border-radius: 12px; background: rgba(255, 255, 255, .12); overflow: hidden; }
+  .bar i { display: block; height: 100%; width: 30%; border-radius: 12px;
+    background: linear-gradient(90deg, #ff4d1a, #ff9a3c, #ffe066); transition: width .4s; box-shadow: 0 0 14px #ff7a2a; }
+  #sayac { margin-top: 10px; font-size: 28px; font-weight: 900; }
+  #oyunSayac { margin-top: 8px; font-size: 22px; font-weight: 800; color: #ffb3d9; line-height: 1.25; }
+  #sag { position: absolute; top: 640px; right: 30px; width: 330px; }
+  #taki { list-style: none; margin: 0; padding: 0; }
+  #taki li { display: flex; align-items: center; font-size: 25px; font-weight: 800; padding: 4px 0; }
+  #taki li b { width: 34px; color: var(--altin); }
+  #taki li span { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  #taki li em { font-style: normal; color: #ffd36a; margin-left: 8px; }
+  #taki li.bos { color: rgba(255, 255, 255, .5); font-size: 22px; }
+
+  #duyuru { position: absolute; top: 830px; left: 50%; display: flex; align-items: center; padding: 22px 40px 22px 22px;
+    border-radius: 120px; background: linear-gradient(135deg, rgba(10, 16, 40, .93), rgba(70, 26, 6, .93));
+    border: 4px solid #a8c0ff; box-shadow: 0 0 60px rgba(140, 180, 255, .7);
+    transform: translateX(-50%) scale(.3); opacity: 0; transition: transform .45s cubic-bezier(.2, 1.6, .4, 1), opacity .3s; max-width: 960px; }
+  #duyuru.acik { transform: translateX(-50%) scale(1); opacity: 1; }
+  #duyuru.altin { background: linear-gradient(135deg, rgba(110, 60, 0, .95), rgba(40, 8, 20, .95)); border-color: var(--altin); box-shadow: 0 0 60px rgba(255, 200, 100, .75); }
+  #duyuru.ay { background: linear-gradient(135deg, rgba(20, 34, 80, .95), rgba(4, 6, 20, .95)); border-color: #ffffff; box-shadow: 0 0 80px rgba(170, 200, 255, .95); }
+  #dAvatar { width: 150px; height: 150px; border-radius: 50%; border: 5px solid #cfe0ff; object-fit: cover; flex: 0 0 150px; background: #121a30; }
+  #dYedek { width: 150px; height: 150px; border-radius: 50%; border: 5px solid #cfe0ff; flex: 0 0 150px; background: #121a30;
+    display: flex; align-items: center; justify-content: center; font-size: 84px; box-sizing: border-box; }
+  #duyuru .metin { margin-left: 26px; min-width: 0; }
+  #dUst { white-space: nowrap; font-size: 30px; font-weight: 900; letter-spacing: 3px; color: #ffcf6a; }
+  #duyuru.ay #dUst { color: #dfe9ff; }
+  #dAd { font-size: 64px; font-weight: 900; line-height: 1.05; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    text-shadow: 0 0 20px rgba(160, 200, 255, .8); }
+  #dAlt { font-size: 32px; font-weight: 800; color: #ffd9b0; }
+
+  #kilit { position: fixed; left: 50%; bottom: 40px; transform: translateX(-50%); padding: 14px 26px; border-radius: 30px;
+    background: #ff7a2a; font-weight: 900; font-size: 18px; cursor: pointer; display: none; z-index: 5; }
+  #baglanti { position: fixed; left: 10px; bottom: 10px; padding: 6px 12px; border-radius: 12px; background: rgba(0, 0, 0, .6);
+    font-size: 13px; font-weight: 700; color: #ffb4b4; display: none; z-index: 5; }
+
+  /* kucuk ust: baslik, koltuklar ve serit daha kucuk, kurtlara yer kalsin */
+  #baslik { top: 16px; }
+  #baslik h1 { font-size: 62px; letter-spacing: 3px; }
+  #baslik .alt { margin-top: 2px; font-size: 18px; letter-spacing: 6px; }
+  #calan { top: 106px; font-size: 21px; padding: 5px 20px; }
+  #cift { top: 166px; }
+  .koltuk { width: 320px; height: 100px; border-radius: 20px; padding: 0 14px; border-width: 2px; }
+  .koltuk .rozet { top: -16px; font-size: 17px; padding: 2px 14px; }
+  .koltuk img, .koltuk .bos { width: 68px; height: 68px; flex: 0 0 68px; font-size: 36px; border-width: 3px; }
+  .koltuk .yazi { margin-left: 12px; }
+  .koltuk .ad { font-size: 25px; }
+  .koltuk .fiyat { margin-top: 3px; font-size: 16px; }
+  #cift .ay { font-size: 42px; margin: 0 10px; }
+  #basi { top: 290px; }
+  #kBasi { width: 470px; height: 76px; }
+  #kBasi .rozet { top: -15px; font-size: 16px; }
+  #kBasi img, #kBasi .bos { width: 54px; height: 54px; flex: 0 0 54px; font-size: 28px; }
+  #kBasi .ad { font-size: 22px; }
+  #kBasi .fiyat { font-size: 15px; }
+  #kayan { top: 384px; font-size: 22px; padding: 6px 22px; }
+  #sol, #sag { top: 450px; }
+
+  @keyframes atis { 0%, 100% { transform: scale(1); } 30% { transform: scale(1.18); } }
+  @keyframes zipla { from { transform: translateY(2px); } to { transform: translateY(-4px); } }
+</style>
+</head>
+<body>
+<canvas id="sahne"></canvas>
+
+<div id="ui">
+  <div id="baslik"><h1>KURT HALAYI</h1><div class="alt">🌕 DOLUNAY ATEŞİ 🔥</div></div>
+  <div id="calan"><span class="not">♫</span> <span id="calanAd">Müzik bekleniyor…</span></div>
+
+  <div id="cift">
+    <div class="koltuk" id="kDamat"><div class="rozet">🐺 ALFA KURT</div><div class="bos">🐺</div>
+      <div class="yazi"><div class="ad">Koltuk boş</div><div class="fiyat"></div></div></div>
+    <div class="ay">🌕</div>
+    <div class="koltuk" id="kGelin"><div class="rozet">🌙 LEYDİ ALFA</div><div class="bos">🌙</div>
+      <div class="yazi"><div class="ad">Koltuk boş</div><div class="fiyat"></div></div></div>
+  </div>
+
+  <div id="basi">
+    <div class="koltuk" id="kBasi"><div class="rozet">🔥 HALAY BAŞI</div><div class="bos">🔥</div>
+      <div class="yazi"><div class="ad">Koltuk boş</div><div class="fiyat"></div></div></div>
+  </div>
+
+  <div id="kayan"><span id="kayanMetin">🎁 Hediye at, kurt halayına katıl!</span></div>
+
+  <div id="sol"><div class="kart"><div class="kbas">🔥 ATEŞ</div><div class="bar"><i id="coskuBar"></i></div>
+    <div id="sayac">🐺 Halayda 0 kurt</div><div id="oyunSayac">🍩 Donut at, ortada oyna!</div></div></div>
+  <div id="sag"><div class="kart"><div class="kbas">💰 HEDİYE LİSTESİ</div><ol id="taki"></ol></div></div>
+
+  <div id="duyuru"><img id="dAvatar" alt=""><div id="dYedek">🐺</div><div class="metin"><div id="dUst"></div><div id="dAd"></div><div id="dAlt"></div></div></div>
+</div>
+
+<div id="kilit">▶ Sesi başlatmak için tıkla</div>
+<div id="baglanti">Köprüye bağlanılıyor…</div>
+
+<script>
+  // Sahne yuklenemezse (kopru kapandi, dosya yarim geldi, hata) ekranda yaz ve kendini yeniden yukle
+  (function () {
+    var sonHata = "";
+    window.addEventListener("error", function (e) { sonHata = (e.message || "dosya yuklenemedi") + (e.filename ? " (" + e.filename.split("/").pop() + ")" : ""); }, true);
+    setTimeout(function kontrol() {
+      if (window.halay) return;
+      var k = document.getElementById("kurtarma");
+      if (!k) { k = document.createElement("div"); k.id = "kurtarma"; k.style.cssText = "position:fixed;left:50%;bottom:6%;transform:translateX(-50%);z-index:99;padding:14px 22px;border-radius:14px;background:rgba(120,10,10,.85);font:800 20px Inter,Arial;color:#fff;text-align:center;max-width:90%"; document.body.appendChild(k); }
+      k.textContent = "Sahne yüklenemedi, yeniden deneniyor… " + (sonHata ? "[" + sonHata + "]" : "");
+      fetch("/halay/sahne.js", { cache: "no-store" }).then(function (r) { if (r.ok) location.reload(); else setTimeout(kontrol, 4000); }, function () { setTimeout(kontrol, 4000); });
+    }, 8000);
+  })();
+</script>
+<script src="/halay/lib/three.min.js"></script>
+<script src="/halay/lib/CopyShader.js"></script>
+<script src="/halay/lib/LuminosityHighPassShader.js"></script>
+<script src="/halay/lib/EffectComposer.js"></script>
+<script src="/halay/lib/RenderPass.js"></script>
+<script src="/halay/lib/ShaderPass.js"></script>
+<script src="/halay/lib/UnrealBloomPass.js"></script>
+<script src="/halay/ses.js"></script>
+<script src="/halay/kurtModel.js"></script>
+<script src="/halay/sahne.js"></script>
+</body>
+</html>

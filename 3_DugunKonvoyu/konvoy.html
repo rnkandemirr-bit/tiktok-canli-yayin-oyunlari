@@ -1,0 +1,356 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Düğün Konvoyu</title>
+<style>
+  html,body{margin:0;height:100%;background:#1b2a1b;overflow:hidden;font-family:"Segoe UI",Arial,sans-serif}
+  canvas{display:block;margin:0 auto;height:100vh;max-width:100vw;object-fit:contain}
+  #panel{position:fixed;left:8px;bottom:8px;display:none;gap:6px;flex-wrap:wrap;max-width:420px;z-index:5}
+  #panel button{font:600 14px "Segoe UI",Arial;padding:8px 10px;border:0;border-radius:8px;background:#fff;color:#222;cursor:pointer}
+  #panel button:hover{background:#ffd54f}
+  #status{position:fixed;right:8px;bottom:8px;color:#fff;font:12px Arial;opacity:.6}
+</style>
+</head>
+<body>
+<canvas id="c" width="1080" height="1920"></canvas>
+<div id="panel">
+  <button data-g="rose">🌹 Gül (1)</button>
+  <button data-g="small">🎁 Küçük (10)</button>
+  <button data-g="mid">🎁 Orta (100)</button>
+  <button data-g="big">💎 Büyük (1000)</button>
+  <button data-g="new">➕ Yeni kişi</button>
+  <button data-g="like">❤️ Beğeni</button>
+  <button data-g="reset">🔄 Sıfırla</button>
+</div>
+<div id="status"></div>
+<script>
+// =================== AYARLAR ===================
+const AYAR = {
+  damatGelin: "GELİN & DAMAT",          // gelin arabasının üstündeki yazı
+  gorunenAraba: 6,                     // ekranda görünen konvoy arabası sayısı
+  ses: true,                            // korna sesleri
+  // Toplam jetona göre araba sınıfları (küçükten büyüğe)
+  siniflar: [
+    { min: 0,    ad: "Emektar",       tip: "emektar" },
+    { min: 10,   ad: "Aile Arabası",  tip: "sedan"   },
+    { min: 50,   ad: "Jip",           tip: "jip"     },
+    { min: 100,  ad: "Spor Araba",    tip: "spor"    },
+    { min: 500,  ad: "Limuzin",       tip: "limuzin" },
+    { min: 1000, ad: "Altın Süper",   tip: "altin"   },
+  ],
+};
+// ===============================================
+
+const cv = document.getElementById('c'), ctx = cv.getContext('2d');
+const W = 1080, H = 1920, LANE = W/2, SWERVE = 230;
+const TOP_Y = 480, GAP = 200;
+const params = new URLSearchParams(location.search);
+if (params.has('test') || params.has('demo')) document.getElementById('panel').style.display = 'flex';
+
+let cars = [];            // konvoy sırası (0 = gelin arabasının hemen arkası)
+const byId = new Map();
+let particles = [], popups = [], hearts = [];
+let roadOff = 0, t0 = performance.now(), lastHonk = 0;
+const imgCache = new Map();
+
+function tierOf(coins){ let s = AYAR.siniflar[0]; for (const k of AYAR.siniflar) if (coins >= k.min) s = k; return s; }
+function hashColor(str){ let h=0; for (const c of str) h = (h*31 + c.charCodeAt(0))|0; return h; }
+function avatar(url){
+  if (!url) return null;
+  if (!imgCache.has(url)){ const im = new Image(); im.src = url; imgCache.set(url, im); }
+  const im = imgCache.get(url); return im.complete && im.naturalWidth ? im : null;
+}
+
+// ---------- SES ----------
+let actx = null;
+function honk(pitch=1){
+  if (!AYAR.ses) return;
+  try {
+    actx = actx || new (window.AudioContext||window.webkitAudioContext)();
+    const now = actx.currentTime, g = actx.createGain();
+    g.gain.setValueAtTime(0.0001, now); g.gain.exponentialRampToValueAtTime(0.12, now+0.02);
+    g.gain.exponentialRampToValueAtTime(0.0001, now+0.35);
+    g.connect(actx.destination);
+    for (const f of [392*pitch, 494*pitch]){ const o = actx.createOscillator(); o.type='square'; o.frequency.value=f; o.connect(g); o.start(now); o.stop(now+0.36); }
+  } catch(e){}
+}
+document.addEventListener('click', ()=>{ try{ actx = actx || new AudioContext(); actx.resume(); }catch(e){} }, {once:true});
+
+// ---------- OYUN MANTIĞI ----------
+function getCar(ev){
+  let car = byId.get(ev.user);
+  if (!car){
+    car = { id: ev.user, nick: ev.nick || ev.user, pic: ev.pic, coins: 0,
+            x: LANE, y: H + 200, ang: 0, swerve: null, hue: Math.abs(hashColor(ev.user)) % 360, glow: 0 };
+    byId.set(ev.user, car); cars.push(car);
+    addPopup(`🚗 ${car.nick} konvoya katıldı!`, '#fff');
+  }
+  if (ev.nick) car.nick = ev.nick; if (ev.pic) car.pic = ev.pic;
+  return car;
+}
+
+function moveUp(car, steps, kind){
+  let i = cars.indexOf(car); if (i <= 0 || steps <= 0) return 0;
+  const to = Math.max(0, i - steps);
+  cars.splice(i, 1); cars.splice(to, 0, car);
+  const passed = i - to;
+  if (passed > 0) startSwerve(car, kind, passed);
+  return passed;
+}
+
+function startSwerve(car, kind, passed){
+  const side = (car.lastSide = -(car.lastSide || 1));
+  car.swerve = { t: 0, dur: 0.9 + Math.min(passed, 5)*0.12, side };
+  addPopup(kind === 'rose' ? `✂️ MAKAS! ${car.nick}` : `🚀 ${car.nick} ${passed} araç geçti!`, kind==='rose' ? '#ff5c8a' : '#ffd54f');
+  honk(kind==='rose' ? 1.25 : 1);
+}
+
+// Hediye: {user, nick, pic, coins, count, isRose}
+const queue = [];
+function onGift(ev){
+  const car = getCar(ev);
+  const oldTier = tierOf(car.coins);
+  car.coins += ev.coins;
+  const nt = tierOf(car.coins);
+  if (nt !== oldTier){ addPopup(`⭐ ${car.nick} → ${nt.ad}!`, '#7cf'); car.glow = 1.5; }
+  if (ev.isRose){
+    for (let k=0;k<Math.min(ev.count||1, 20);k++) queue.push(()=>moveUp(car, 1, 'rose'));
+  } else {
+    // daha az jetonu olan herkesi geç (en az 1 araç)
+    const i = cars.indexOf(car); let to = i;
+    while (to > 0 && cars[to-1].coins < car.coins) to--;
+    queue.push(()=>moveUp(car, Math.max(1, i - to), 'gift'));
+  }
+}
+function onLike(ev){
+  for (let k=0;k<Math.min(ev.count||1, 6);k++)
+    hearts.push({x: LANE + (Math.random()-0.5)*200, y: TOP_Y + 40, vy: -2-Math.random()*2, vx:(Math.random()-0.5)*2, life: 1});
+  const now = performance.now();
+  if (now - lastHonk > 4000){ lastHonk = now; honk(0.8); addPopup('📯 Düt düt! Beğeniler geliyor', '#fff'); }
+}
+let qTimer = 0;
+function processQueue(dt){ qTimer -= dt; if (qTimer <= 0 && queue.length){ queue.shift()(); qTimer = 0.45; } }
+
+function addPopup(text, color){ popups.push({text, color, life: 2.6}); if (popups.length > 3) popups.shift(); }
+
+// ---------- ÇİZİM ----------
+function rr(x,y,w,h,r){ ctx.beginPath(); ctx.roundRect(x,y,w,h,r); }
+
+function drawRoad(dt){
+  ctx.fillStyle = '#3f7d3a'; ctx.fillRect(0,0,W,H);
+  // ağaçlar
+  roadOff = (roadOff + dt*520) % 240;
+  for (let y=-240+roadOff; y<H+240; y+=240){
+    for (const x of [70, W-70]){
+      ctx.fillStyle='rgba(0,0,0,.18)'; ctx.beginPath(); ctx.arc(x+10,y+12,52,0,7); ctx.fill();
+      ctx.fillStyle='#2d6b2a'; ctx.beginPath(); ctx.arc(x,y,52,0,7); ctx.fill();
+      ctx.fillStyle='#3f8f3a'; ctx.beginPath(); ctx.arc(x-12,y-12,30,0,7); ctx.fill();
+    }
+  }
+  ctx.fillStyle = '#d9d2c3'; ctx.fillRect(150,0,W-300,H);
+  ctx.fillStyle = '#3a3d42'; ctx.fillRect(170,0,W-340,H);
+  ctx.fillStyle = '#f5f5f5';
+  for (let y=-120+(roadOff%120); y<H; y+=120){
+    ctx.fillRect(LANE-SWERVE/2-4, y, 8, 60); ctx.fillRect(LANE+SWERVE/2-4, y, 8, 60);
+  }
+}
+
+function wheels(w,h){
+  ctx.fillStyle='#111';
+  for (const sx of [-1,1]) for (const sy of [-0.32,0.3]) { rr(sx*w/2 - (sx>0?2:12), sy*h - 18, 14, 36, 4); ctx.fill(); }
+}
+function windows(w,h,front=-0.22, back=0.24, color='#9fd3ef'){
+  ctx.fillStyle=color;
+  rr(-w/2+14, front*h - 26, w-28, 34, 10); ctx.fill();
+  rr(-w/2+16, back*h - 8, w-32, 24, 8); ctx.fill();
+}
+function lights(w,h){
+  ctx.fillStyle='#fff7b0'; rr(-w/2+8,-h/2+4,22,10,4); ctx.fill(); rr(w/2-30,-h/2+4,22,10,4); ctx.fill();
+  ctx.fillStyle='#ff3b3b'; rr(-w/2+8,h/2-12,20,8,3); ctx.fill(); rr(w/2-28,h/2-12,20,8,3); ctx.fill();
+}
+
+function drawCarBody(tip, hue, time){
+  let w=104, h=190, col=`hsl(${hue} 65% 50%)`;
+  ctx.save();
+  if (tip==='altin'){ // neon alt ışık
+    ctx.shadowColor=`hsl(${(time*120)%360} 100% 60%)`; ctx.shadowBlur=45;
+  }
+  if (tip==='emektar'){ col=`hsl(${hue} 18% 52%)`; w=96; h=176; }
+  if (tip==='jip'){ col='#1d1f24'; w=118; h=200; }
+  if (tip==='spor'){ col='#d61f2c'; w=108; h=196; }
+  if (tip==='limuzin'){ col='#f4f4f4'; w=108; h=290; }
+  if (tip==='altin'){ col='#e8b923'; w=116; h=212; }
+  wheels(w,h);
+  ctx.fillStyle=col; rr(-w/2,-h/2,w,h,tip==='jip'?16:tip==='spor'?40:28); ctx.fill();
+  ctx.restore();
+  if (tip==='altin'){ const g=ctx.createLinearGradient(-w/2,0,w/2,0); g.addColorStop(0,'#b8860b'); g.addColorStop(.5,'#fff1a8'); g.addColorStop(1,'#b8860b'); ctx.fillStyle=g; rr(-w/2,-h/2,w,h,28); ctx.fill(); }
+  if (tip==='spor'){ ctx.fillStyle='#fff'; ctx.fillRect(-14,-h/2,10,h); ctx.fillRect(4,-h/2,10,h); ctx.fillStyle='#222'; rr(-w/2-6,h/2-20,w+12,14,4); ctx.fill(); }
+  if (tip==='jip'){ ctx.strokeStyle='#888'; ctx.lineWidth=4; for(let i=-2;i<=2;i++){ctx.beginPath();ctx.moveTo(-w/2+20,i*14+10);ctx.lineTo(w/2-20,i*14+10);ctx.stroke();} }
+  if (tip==='emektar'){ ctx.fillStyle='#8a5a2b'; for (const [x,y,r] of [[-24,40,10],[20,-50,7],[28,60,8]]){ctx.beginPath();ctx.arc(x,y,r,0,7);ctx.fill();} }
+  if (tip==='limuzin'){ windows(w,h,-0.3,0.33,'#2b2b33'); ctx.fillStyle='#2b2b33'; rr(-w/2+16,-30,w-32,70,8); ctx.fill(); ctx.strokeStyle='#d4af37'; ctx.lineWidth=4; rr(-w/2+3,-h/2+3,w-6,h-6,26); ctx.stroke(); }
+  else windows(w,h, -0.2, 0.26, tip==='jip'||tip==='altin' ? '#333a44' : '#9fd3ef');
+  if (tip==='altin'){ ctx.font='44px serif'; ctx.textAlign='center'; ctx.fillText('👑',0,22); }
+  lights(w,h);
+  return h;
+}
+
+function drawBride(time){
+  const y = TOP_Y, x = LANE + Math.sin(time*1.3)*6;
+  ctx.save(); ctx.translate(x,y);
+  ctx.fillStyle='rgba(0,0,0,.25)'; rr(-62,-100,132,214,34); ctx.fill();
+  const w=118,h=208; wheels(w,h);
+  ctx.fillStyle='#ffffff'; rr(-w/2,-h/2,w,h,34); ctx.fill();
+  windows(w,h,-0.2,0.27);
+  // kurdeleler
+  ctx.strokeStyle='#e91e63'; ctx.lineWidth=7;
+  ctx.beginPath(); ctx.moveTo(-w/2+6,-h/2+20); ctx.lineTo(w/2-6,h/2-20); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(w/2-6,-h/2+20); ctx.lineTo(-w/2+6,h/2-20); ctx.stroke();
+  // çiçekler
+  for (const [fx,fy] of [[0,-h/2+28],[-30,-h/2+40],[30,-h/2+40],[0,10]]){
+    for (let a=0;a<5;a++){ ctx.fillStyle=a%2?'#ff80ab':'#fff'; ctx.beginPath(); ctx.arc(fx+Math.cos(a*1.26)*9, fy+Math.sin(a*1.26)*9, 8,0,7); ctx.fill(); }
+    ctx.fillStyle='#ffd54f'; ctx.beginPath(); ctx.arc(fx,fy,6,0,7); ctx.fill();
+  }
+  lights(w,h);
+  // arkadan uçuşan kurdele
+  ctx.strokeStyle='#ff4f8b'; ctx.lineWidth=5;
+  for (const s of [-1,1]){ ctx.beginPath(); ctx.moveTo(s*30,h/2); ctx.quadraticCurveTo(s*(40+Math.sin(time*6)*14), h/2+40, s*(20+Math.sin(time*5+s)*20), h/2+80); ctx.stroke(); }
+  ctx.restore();
+  // etiket
+  ctx.font='800 42px "Segoe UI",Arial'; ctx.textAlign='center';
+  const txt='💍 '+AYAR.damatGelin+' 💍', tw=ctx.measureText(txt).width+40;
+  ctx.fillStyle='rgba(233,30,99,.92)'; rr(LANE-tw/2, y-170, tw, 60, 30); ctx.fill();
+  ctx.fillStyle='#fff'; ctx.fillText(txt, LANE, y-127);
+}
+
+function drawLabel(car, rank, x, y){
+  const t = tierOf(car.coins);
+  const right = x < LANE + 10; // etiketi boş tarafa koy
+  const bx = right ? x + 90 : x - 90 - 300;
+  const crown = rank === 0 ? '👑 SAĞDIÇ' : `#${rank+1}`;
+  ctx.fillStyle = rank===0 ? 'rgba(255,193,7,.95)' : 'rgba(0,0,0,.72)';
+  rr(bx, y-52, 300, 104, 18); ctx.fill();
+  const im = avatar(car.pic);
+  ctx.save(); ctx.beginPath(); ctx.arc(bx+48, y, 34, 0, 7); ctx.clip();
+  if (im) ctx.drawImage(im, bx+14, y-34, 68, 68);
+  else { ctx.fillStyle=`hsl(${car.hue} 60% 55%)`; ctx.fillRect(bx+14,y-34,68,68); ctx.fillStyle='#fff'; ctx.font='800 34px Arial'; ctx.textAlign='center'; ctx.fillText((car.nick[0]||'?').toUpperCase(), bx+48, y+12); }
+  ctx.restore();
+  ctx.textAlign='left'; const fg = rank===0 ? '#3a2600' : '#fff';
+  ctx.fillStyle=fg; ctx.font='700 22px "Segoe UI",Arial'; ctx.fillText(crown, bx+94, y-20);
+  ctx.font='800 28px "Segoe UI",Arial'; ctx.fillText(fit(car.nick, 190), bx+94, y+12);
+  ctx.font='600 20px "Segoe UI",Arial'; ctx.fillStyle = rank===0 ? '#5a3c00' : '#ffd54f';
+  ctx.fillText(`${t.ad} · ${car.coins} 🪙`, bx+94, y+40);
+}
+function fit(s, w){ if (ctx.measureText(s).width <= w) return s; while (s.length && ctx.measureText(s+'…').width > w) s = s.slice(0,-1); return s+'…'; }
+
+function update(dt, time){
+  cars.forEach((car, i) => {
+    const visible = i < AYAR.gorunenAraba;
+    const targetY = visible ? TOP_Y + (i+1)*GAP + (i===0?20:0) : H + 260;
+    let targetX = LANE;
+    if (car.swerve){
+      const s = car.swerve; s.t += dt/s.dur; const p = Math.min(1, s.t);
+      // dışarı çık, geç, sertçe içeri kır (makas)
+      const off = p < 0.75 ? Math.sin(p/0.75*Math.PI/2) : Math.cos((p-0.75)/0.25*Math.PI/2) * 1 - Math.sin((p-0.75)/0.25*Math.PI)*0.25;
+      targetX = LANE + s.side * SWERVE * off;
+      if (p > 0.72 && p < 0.95 && Math.random() < 0.8) smoke(car.x, car.y + 80);
+      if (p >= 1) car.swerve = null;
+      car.y += (targetY - car.y) * Math.min(1, dt * 2.2 * (p > 0.2 ? 1 : 0.3));
+    } else {
+      car.y += (targetY - car.y) * Math.min(1, dt*3);
+    }
+    const prevX = car.x; car.x += (targetX - car.x) * Math.min(1, dt*9);
+    const vx = (car.x - prevX) / Math.max(dt, 0.001);
+    car.ang += ((vx/900) - car.ang) * Math.min(1, dt*10);
+    car.glow = Math.max(0, car.glow - dt);
+  });
+  particles = particles.filter(p => (p.life -= dt) > 0);
+  particles.forEach(p => { p.x += p.vx; p.y += p.vy; p.r += 0.6; });
+  popups = popups.filter(p => (p.life -= dt) > 0);
+  hearts = hearts.filter(h => (h.life -= dt*0.6) > 0);
+  hearts.forEach(h => { h.x += h.vx; h.y += h.vy; });
+}
+function smoke(x,y){ particles.push({x:x+(Math.random()-0.5)*60, y, vx:(Math.random()-0.5)*1.5, vy:2+Math.random()*2, r:10, life:0.8}); }
+
+function draw(time, dt){
+  drawRoad(dt);
+  for (const p of particles){ ctx.fillStyle=`rgba(220,220,220,${p.life*0.6})`; ctx.beginPath(); ctx.arc(p.x,p.y,p.r,0,7); ctx.fill(); }
+  // arkadakiler önce
+  const shown = cars.slice(0, AYAR.gorunenAraba + 2);
+  for (let i = shown.length-1; i >= 0; i--){
+    const car = shown[i]; if (car.y > H + 200) continue;
+    const t = tierOf(car.coins);
+    ctx.save(); ctx.translate(car.x, car.y); ctx.rotate(car.ang);
+    if (car.glow > 0){ ctx.shadowColor='#7cf'; ctx.shadowBlur=60*car.glow; }
+    drawCarBody(t.tip, car.hue, time);
+    ctx.restore();
+  }
+  drawBride(time);
+  for (let i = 0; i < shown.length; i++){ const c = shown[i]; if (c.y < H - 40) drawLabel(c, i, c.x, c.y); }
+  for (const h of hearts){ ctx.globalAlpha=h.life; ctx.font='46px serif'; ctx.textAlign='center'; ctx.fillText('❤️',h.x,h.y); ctx.globalAlpha=1; }
+
+  // üst başlık
+  ctx.fillStyle='rgba(0,0,0,.55)'; rr(40,30,W-80,90,24); ctx.fill();
+  ctx.fillStyle='#fff'; ctx.textAlign='center'; ctx.font='800 40px "Segoe UI",Arial';
+  ctx.fillText('🚗 DÜĞÜN KONVOYU · 🌹 Gül = MAKAS!', W/2, 90);
+
+  // alt bilgi: kaç kişi gizli
+  const hidden = cars.length - AYAR.gorunenAraba;
+  if (hidden > 0){ ctx.fillStyle='rgba(0,0,0,.6)'; rr(W/2-200,H-90,400,60,30); ctx.fill(); ctx.fillStyle='#fff'; ctx.font='700 30px "Segoe UI",Arial'; ctx.fillText(`+${hidden} araç daha konvoyda`, W/2, H-50); }
+  if (!cars.length){ ctx.fillStyle='rgba(0,0,0,.6)'; rr(W/2-360,H/2-70,720,140,30); ctx.fill(); ctx.fillStyle='#fff'; ctx.font='800 40px "Segoe UI",Arial'; ctx.fillText('Hediye at, konvoya katıl! 🎁', W/2, H/2-5); ctx.font='600 30px "Segoe UI",Arial'; ctx.fillText('Çok atan en güzel arabaya biner', W/2, H/2+40); }
+
+  popups.forEach((p, i) => {
+    const y = 140 + i*56;
+    ctx.globalAlpha = Math.min(1, p.life); ctx.font='800 34px "Segoe UI",Arial';
+    const txt = fit(p.text, W-140), tw = ctx.measureText(txt).width + 44;
+    ctx.fillStyle='rgba(0,0,0,.75)'; rr(W/2-tw/2, y, tw, 50, 25); ctx.fill();
+    ctx.fillStyle=p.color; ctx.fillText(txt, W/2, y+37); ctx.globalAlpha=1;
+  });
+}
+
+let last = performance.now();
+function loop(now){
+  const dt = Math.min(0.05, (now-last)/1000); last = now; const time = (now - t0)/1000;
+  processQueue(dt); update(dt, time); draw(time, dt);
+  requestAnimationFrame(loop);
+}
+requestAnimationFrame(loop);
+
+// ---------- BAĞLANTI (server.js) ----------
+const st = document.getElementById('status');
+function connect(){
+  if (location.protocol === 'file:') { st.textContent = 'Test modu (sunucu yok)'; return; }
+  const ws = new WebSocket(`ws://${location.host}`);
+  ws.onopen = () => st.textContent = '● bağlı';
+  ws.onclose = () => { st.textContent = '○ bağlantı yok, tekrar deneniyor…'; setTimeout(connect, 2000); };
+  ws.onmessage = e => { const m = JSON.parse(e.data);
+    if (m.type==='gift') onGift(m); else if (m.type==='like') onLike(m);
+    else if (m.type==='info') st.textContent = '● ' + m.text; };
+}
+connect();
+
+// ---------- TEST ----------
+const fakeNames = ['ayse_k','mehmet34','zeyno','kral_ali','elif.nur','burak_x','dilara','emre06','selin_s','hasan.usta','gizem','oguzhan'];
+let fakeIdx = 0;
+function fakeUser(fresh){
+  if (!fresh && cars.length && Math.random() < 0.75) { const c = cars[Math.floor(Math.random()*cars.length)]; return {user:c.id, nick:c.nick}; }
+  const n = fakeNames[fakeIdx++ % fakeNames.length] + (fakeIdx > fakeNames.length ? fakeIdx : ''); return {user:n, nick:n};
+}
+const tests = {
+  rose:  () => onGift({...fakeUser(), coins:1, count:1, isRose:true}),
+  small: () => onGift({...fakeUser(), coins:10, count:1}),
+  mid:   () => onGift({...fakeUser(), coins:100, count:1}),
+  big:   () => onGift({...fakeUser(), coins:1000, count:1}),
+  new:   () => onGift({...fakeUser(true), coins:1, count:1, isRose:true}),
+  like:  () => onLike({count:5}),
+  reset: () => { cars = []; byId.clear(); queue.length = 0; },
+};
+document.querySelectorAll('#panel button').forEach(b => b.onclick = () => tests[b.dataset.g]());
+if (params.has('demo')){
+  for (let i=0;i<5;i++) tests.new();
+  setInterval(() => { const r = Math.random(); (r<.55?tests.rose:r<.8?tests.small:r<.93?tests.mid:r<.97?tests.like:tests.big)(); }, 1600);
+}
+</script>
+</body>
+</html>

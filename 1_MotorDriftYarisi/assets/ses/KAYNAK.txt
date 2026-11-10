@@ -1,0 +1,4 @@
+Motor sesleri: "Engines - Startup, Idle & Rev" - dklon (OpenGameArt.org)
+https://opengameart.org/content/engines-startup-idle-rev
+Lisans: CC-BY-SA 3.0 - yayında/açıklamada "Motor sesleri: dklon (OpenGameArt)" yazılmalı.
+motor_rolanti.wav / motor_yuksek.wav = 090912-003.mp3 kaydından kesilip döngü yapıldı.

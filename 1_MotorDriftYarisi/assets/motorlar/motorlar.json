@@ -1,0 +1,13 @@
+[
+ {"dosya": "kawasaki.glb",   "ad": "Kawasaki Ninja ZX-10R",  "boy": 2.1,  "ters": false, "sele": [0.33, -0.05], "guc": 5, "hediye": ["donut", "doughnut"],        "etiket": "🍩 Donut", "ses_ton": 0.92},
+ {"dosya": "facelayers.glb", "ad": "Spirit Süper Sport",     "boy": 2.1,  "ters": false, "sele": [0.25, -0.20], "guc": 4, "hediye": ["perfume", "parfüm"],         "etiket": "💐 Parfüm", "ses_ton": 0.96},
+ {"dosya": "bilinmeyen.glb", "ad": "Neo Hyper (Fütüristik)", "boy": 2.1,  "ters": false, "sele": [0.35, -0.48], "guc": 4, "hediye": ["finger heart", "parmak kalp"], "etiket": "💖 Parmak Kalp", "ses_ton": 1.06},
+ {"dosya": "caferacer.glb",  "ad": "Cafe Racer",             "boy": 2.1,  "ters": false, "sele": [0.23, -0.12], "guc": 3, "hediye": ["tiktok"],                     "etiket": "🎵 TikTok", "ses_ton": 0.80},
+ {"dosya": "paket1.glb",     "ad": "Sokak Canavarı 1",       "boy": 2.1,  "ters": false, "sele": [0.26, -0.12], "guc": 2, "hediye": [], "renk": "#c62828", "ses_ton": 0.98},
+ {"dosya": "paket2.glb",     "ad": "Sokak Canavarı 2",       "boy": 2.1,  "ters": false, "sele": [0.26, -0.12], "guc": 2, "hediye": [], "renk": "#1565c0", "ses_ton": 1.02},
+ {"dosya": "paket3.glb",     "ad": "Sokak Canavarı 3",       "boy": 2.1,  "ters": false, "sele": [0.26, -0.12], "guc": 2, "hediye": [], "renk": "#ef6c00", "ses_ton": 0.99},
+ {"dosya": "paket4.glb",     "ad": "Sokak Canavarı 4",       "boy": 2.1,  "ters": false, "sele": [0.26, -0.12], "guc": 2, "hediye": [], "renk": "#6a1b9a", "ses_ton": 1.03},
+ {"dosya": "paket5.glb",     "ad": "Sokak Canavarı 5",       "boy": 2.1,  "ters": false, "sele": [0.26, -0.12], "guc": 2, "hediye": [], "renk": "#f9a825", "ses_ton": 0.97},
+ {"dosya": "paket6.glb",     "ad": "Sokak Canavarı 6",       "boy": 2.1,  "ters": false, "sele": [0.26, -0.12], "guc": 2, "hediye": [], "renk": "#2e7d32", "ses_ton": 1.01},
+ {"dosya": "scooter.glb",    "ad": "Elektrikli Scooter",     "boy": 1.85, "ters": false, "sele": [0.33, -0.18], "guc": 1, "hediye": [], "ses_ton": 1.45}
+]

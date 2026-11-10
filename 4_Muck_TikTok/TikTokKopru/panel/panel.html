@@ -1,0 +1,263 @@
+﻿<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Hediye Paneli</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;700;800&family=Teko:wght@500;600&display=swap" rel="stylesheet">
+<style>
+  /* Dikey TikTok yayini icin hediye paneli: 1080x840 tasarlandi, pencereye olceklenir. */
+  :root {
+    --zemin: #05070d;
+    --kart: rgba(15, 20, 32, .92);
+    --yazi: #ffffff;
+    --baslik: 'Teko', 'Bahnschrift SemiBold Condensed', 'Bahnschrift', Impact, sans-serif;
+    --metin: 'Inter', 'Segoe UI', Arial, sans-serif;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 100%; height: 100%; overflow: hidden; background: var(--zemin); }
+  body { display: flex; align-items: flex-start; justify-content: center; }
+
+  #sahne {
+    width: 1080px; height: 840px; padding: 22px 24px; flex: none;
+    transform-origin: top center;
+    display: flex; flex-direction: column; gap: 16px;
+    background:
+      radial-gradient(900px 380px at 15% 0%, rgba(124, 77, 255, .16), transparent 70%),
+      radial-gradient(800px 360px at 100% 100%, rgba(254, 44, 85, .12), transparent 70%),
+      var(--zemin);
+    border-bottom: 3px solid rgba(124, 77, 255, .8);
+    font-family: var(--metin); color: var(--yazi);
+  }
+
+  header {
+    height: 64px; flex: none; display: flex; align-items: center; gap: 14px;
+    padding: 0 22px; border-radius: 16px;
+    background: rgba(9, 12, 21, .92); border: 1.5px solid rgba(255, 255, 255, .10);
+  }
+  header img { width: 34px; height: 34px; }
+  header h1 { font-family: var(--baslik); font-weight: 600; font-size: 46px; letter-spacing: 1px; line-height: 1; padding-top: 6px; flex: 1; }
+  #durum {
+    font-weight: 700; font-size: 19px; padding: 7px 18px; border-radius: 999px;
+    border: 1.5px solid currentColor; color: #ffd45c; background: rgba(255, 212, 92, .06);
+  }
+  #durum.canli { color: #00f2fe; background: rgba(0, 242, 254, .07); }
+  #durum.kapali { color: #ff6060; background: rgba(255, 96, 96, .07); }
+
+  #izgara { display: grid; grid-template-columns: 1fr 1fr; grid-auto-rows: 160px; gap: 16px; flex: none; }
+
+  .kart {
+    --kenar: #2b3353; --v: 124, 108, 255; --vurgu: rgb(var(--v)); --alt: #8a98b8; --ad: #ffffff;
+    position: relative; border-radius: 18px; padding: 14px 14px 14px 20px;
+    background: var(--kart); border: 2px solid var(--kenar);
+    display: flex; align-items: center; gap: 12px; overflow: hidden;
+    transition: transform .25s, box-shadow .25s, border-color .25s;
+  }
+  .kart.Pembe { --kenar: #5d1d33; --v: 254, 44, 85; --vurgu: rgb(var(--v)); --alt: #e07a8e; }
+  .kart.Yesil { --kenar: #0e4e3b; --v: 0, 242, 254; --vurgu: rgb(var(--v)); --alt: #5cdbb5; --ad: #25f4ee; }
+  .kart .yazi { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px; }
+  .kart .ust { display: flex; align-items: center; gap: 10px; min-width: 0; }
+  .kart .ust img { width: 40px; height: 40px; flex: none; }
+  .kart .ad { font-family: var(--baslik); font-weight: 600; font-size: 44px; line-height: 1; padding-top: 6px; color: var(--ad); white-space: nowrap; overflow: hidden; }
+  .kart .cikan { font-size: 18px; font-weight: 700; color: var(--alt); line-height: 1.25; }
+
+  .yaratiklar { display: flex; gap: 10px; flex: none; height: 100%; }
+  .yaratik {
+    width: 128px; height: 100%; border-radius: 14px; position: relative;
+    background: radial-gradient(circle at 50% 85%, rgba(var(--v), .40), rgba(0, 0, 0, .45) 65%);
+    border: 1.5px solid rgba(var(--v), .50);
+    display: flex; align-items: flex-end; justify-content: center;
+  }
+  .yaratik img { max-width: 92%; max-height: 92%; object-fit: contain; filter: drop-shadow(0 4px 6px rgba(0, 0, 0, .6)); }
+
+  /* tetiklenince */
+  .kart.parla { transform: scale(1.035); border-color: var(--vurgu); box-shadow: 0 0 34px rgba(var(--v), .75), inset 0 0 40px rgba(var(--v), .30); z-index: 2; }
+  .rozet {
+    position: absolute; left: 12px; right: 12px; bottom: 10px; padding: 8px 14px; border-radius: 12px;
+    background: rgba(5, 7, 13, .9); border: 1.5px solid var(--vurgu);
+    font-weight: 800; font-size: 20px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    animation: rozet 3.5s ease forwards; z-index: 3;
+  }
+  @keyframes rozet {
+    0% { opacity: 0; transform: translateY(16px); }
+    8%, 85% { opacity: 1; transform: none; }
+    100% { opacity: 0; transform: translateY(-6px); }
+  }
+
+  /* buyuk hediye (Bob) */
+  .buyuk {
+    position: relative; height: 160px; flex: none; border-radius: 20px; padding: 0 24px;
+    background: linear-gradient(100deg, #ff9800 0%, #f57c00 45%, #e65100 100%);
+    border: 2.5px solid #ffb74d; display: flex; align-items: center; gap: 20px; overflow: visible;
+    animation: nabiz 2.2s ease-in-out infinite;
+  }
+  @keyframes nabiz {
+    0%, 100% { box-shadow: 0 0 22px rgba(230, 81, 0, .45); }
+    50% { box-shadow: 0 0 44px rgba(255, 152, 0, .75); }
+  }
+  .buyuk.parla { animation: titre .5s linear 4, nabiz 2.2s ease-in-out infinite; box-shadow: 0 0 70px rgba(255, 183, 77, 1); }
+  @keyframes titre {
+    0%, 100% { transform: none; } 25% { transform: translateX(-6px) rotate(-.4deg); } 75% { transform: translateX(6px) rotate(.4deg); }
+  }
+  .buyuk > img.ikon { width: 70px; height: 70px; flex: none; }
+  .buyuk .yazi { flex: 1; min-width: 0; text-shadow: 0 2px 4px rgba(0, 0, 0, .35); }
+  .buyuk .etiket { display: inline-block; font-weight: 800; font-size: 17px; padding: 3px 12px; border-radius: 999px; background: rgba(0, 0, 0, .22); color: #fff3e0; }
+  .buyuk .ad { font-family: var(--baslik); font-weight: 600; font-size: 60px; line-height: 1; padding-top: 8px; white-space: nowrap; overflow: hidden; }
+  .buyuk .cikan { font-weight: 800; font-size: 22px; color: #ffe0b2; letter-spacing: .5px; }
+  .buyuk .bob { width: 205px; height: 205px; margin-top: -36px; flex: none; object-fit: contain; filter: drop-shadow(0 8px 12px rgba(0, 0, 0, .5)); }
+  .buyuk .rozet { left: 110px; right: 230px; border-color: #fff3e0; }
+</style>
+</head>
+<body>
+<div id="sahne">
+  <header>
+    <img id="baslikIkon" src="/ikon/26a1.png" alt="">
+    <h1>HEDİYE TETİKLEYİCİ</h1>
+    <div id="durum" class="kapali">● Köprü kapalı</div>
+  </header>
+  <div id="izgara"></div>
+  <div id="buyukYer"></div>
+</div>
+
+<script>
+  // Mod baglanmadan once gosterilecek varsayilan kartlar (mod baglaninca kendi listesini gonderir)
+  let kartlar = [
+    { id: 0, ikon: '1f4ac', ad: 'Yorum / Beğeni', cikan: "Her yorum ve beğeni", etiket: '', stil: 'Mor', yaratiklar: ['lil dave', 'goblin'] },
+    { id: 1, ikon: '1f339', ad: 'Gül', cikan: '1-4 jeton', etiket: '', stil: 'Pembe', yaratiklar: ['wolf', 'dave (fire)'] },
+    { id: 2, ikon: '1faf0', ad: 'Parmak Kalp', cikan: '5-9 jeton · uçan', etiket: '', stil: 'Mor', yaratiklar: ['wyvern'] },
+    { id: 3, ikon: '1f369', ad: 'Donut', cikan: '30-99 jeton · BOSS', etiket: '', stil: 'Mor', yaratiklar: ['big chunk', 'gronk'] },
+    { id: 4, ikon: '1f381', ad: 'Orta Hediye', cikan: '100-499 jeton · BOSS', etiket: '', stil: 'Mor', yaratiklar: ['guardian', 'chief'] },
+    { id: 5, ikon: '1f404', ad: 'Yardım Drop', cikan: '10-29 jeton · inek yağmuru', etiket: '', stil: 'Yesil', yaratiklar: ['cow'] },
+    { id: 6, ikon: '1f981', ad: 'BÜYÜK HEDİYE (ASLAN)', cikan: 'BOB EJDERHASI ULTIMATE BOSS', etiket: '500+ jeton', stil: 'Buyuk', yaratiklar: ['bob'] },
+  ];
+  let sira = [0, 1, 2, 5, 3, 4, 6];
+  const ogeler = {};
+
+  const esc = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  // Panel dosyadan (file:///) acilirsa resimleri klasorden al, kopru uzerinden acilirsa kopruden
+  const DOSYA = location.protocol === 'file:';
+  const GORSELLER = ['Big_Chunk', 'Bob', 'Chief', 'Cow', 'Dave_Fire', 'Dave_Lightning', 'Dave_Water', 'Goblin', 'Gronk', 'Guardian', 'Stone_Golem', 'Wolf', 'Woodman', 'Wyvern', 'lil_Dave'];
+  const sade = (s) => String(s).toLowerCase().replace(/[^a-z0-9]/g, '');
+  const ikonYol = (kod) => DOSYA ? `ikonlar/${kod}.png` : `/ikon/${kod}.png`;
+  const gorselYol = (ad) => {
+    if (!DOSYA) return `/gorsel/${encodeURIComponent(ad)}`;
+    const a = sade(ad), f = GORSELLER.find((g) => sade(g) === a) || GORSELLER.find((g) => sade(g).includes(a)) || ad;
+    return `../../Yaratik_Gorselleri/${encodeURIComponent(f)}.png`;
+  };
+  const gorsel = (ad) => `<img src="${gorselYol(ad)}" alt="" onerror="this.parentElement.style.display='none'">`;
+
+  function ciz() {
+    const izgara = document.getElementById('izgara');
+    const buyukYer = document.getElementById('buyukYer');
+    izgara.innerHTML = '';
+    buyukYer.innerHTML = '';
+    for (const id of sira) {
+      const k = kartlar.find((x) => x.id === id);
+      if (!k) continue;
+      const el = document.createElement('div');
+      if (k.stil === 'Buyuk') {
+        el.className = 'buyuk';
+        el.innerHTML = `
+          <img class="ikon" src="${ikonYol(k.ikon)}" alt="">
+          <div class="yazi">
+            ${k.etiket ? `<span class="etiket">${esc(k.etiket)}</span>` : ''}
+            <div class="ad">${esc(k.ad)}</div>
+            <div class="cikan">${esc(k.cikan)}</div>
+          </div>
+          <img class="bob" src="${gorselYol(k.yaratiklar[0] || 'bob')}" alt="" onerror="this.src='${ikonYol('1f409')}'">`;
+        buyukYer.appendChild(el);
+      } else {
+        el.className = 'kart ' + k.stil;
+        el.innerHTML = `
+          <div class="yazi">
+            <div class="ust"><img src="${ikonYol(k.ikon)}" alt=""><div class="ad">${esc(k.ad)}</div></div>
+            <div class="cikan">${esc(k.cikan)}</div>
+          </div>
+          <div class="yaratiklar">${k.yaratiklar.map((y) => `<div class="yaratik">${gorsel(y)}</div>`).join('')}</div>`;
+        izgara.appendChild(el);
+      }
+      ogeler[k.id] = el;
+    }
+    sigdir();
+  }
+
+  // Uzun basliklar kesilmesin: sigana kadar kucult
+  function sigdir() {
+    document.querySelectorAll('.ad').forEach((el) => {
+      el.style.fontSize = '';
+      let px = parseFloat(getComputedStyle(el).fontSize);
+      while (el.scrollWidth > el.clientWidth + 1 && px > 22) { px -= 1; el.style.fontSize = px + 'px'; }
+    });
+  }
+
+  const zamanlayicilar = {};
+  function tetikle(m) {
+    const el = ogeler[m.kart];
+    if (!el) return;
+    el.classList.remove('parla');
+    void el.offsetWidth;
+    el.classList.add('parla');
+    var eski = el.querySelector('.rozet'); if (eski) eski.remove();
+    if (m.metin) {
+      const r = document.createElement('div');
+      r.className = 'rozet';
+      r.textContent = m.metin;
+      el.appendChild(r);
+    }
+    clearTimeout(zamanlayicilar[m.kart]);
+    zamanlayicilar[m.kart] = setTimeout(() => {
+      el.classList.remove('parla');
+      var eski = el.querySelector('.rozet'); if (eski) eski.remove();
+    }, 3500);
+  }
+
+  function durumYaz(sinif, metin) {
+    const d = document.getElementById('durum');
+    d.className = sinif;
+    d.textContent = metin;
+  }
+
+  function baglan() {
+    const ws = new WebSocket(`ws://${location.host || '127.0.0.1:21213'}`);
+    ws.onmessage = (e) => {
+      let m;
+      try { m = JSON.parse(e.data); } catch { return; }
+      if (m.tur === 'kartlar' && Array.isArray(m.kartlar)) {
+        kartlar = m.kartlar;
+        if (Array.isArray(m.sira)) sira = m.sira;
+        ciz();
+      } else if (m.tur === 'tetik') {
+        tetikle(m);
+      } else if (m.tur === 'durum') {
+        if (m.bagli) durumYaz('canli', '● Canlı');
+        else durumYaz('', '● Bekliyor');
+      }
+    };
+    ws.onclose = () => { durumYaz('kapali', '● Köprü kapalı'); setTimeout(baglan, 3000); };
+    ws.onerror = () => ws.close();
+  }
+
+  // Pencere ne boyutta olursa olsun paneli sigdir
+  function olcekle() {
+    const o = Math.min(innerWidth / 1080, innerHeight / 840);
+    document.getElementById('sahne').style.transform = `scale(${o})`;
+  }
+  addEventListener('resize', olcekle);
+
+  document.getElementById('baslikIkon').src = ikonYol('26a1');
+  ciz();
+  olcekle();
+  baglan();
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(sigdir);
+  // yaratik gorselleri oyun ilk acildiginda uretilir; birkac saniyede bir yenile ki sonradan gelsin
+  let yenile = 0;
+  const gorselYenile = setInterval(() => {
+    document.querySelectorAll('.yaratik').forEach((y) => {
+      if (y.style.display === 'none') { y.style.display = ''; const i = y.querySelector('img'); i.src = i.src.split('?')[0] + '?' + Date.now(); }
+    });
+    if (++yenile > 20) clearInterval(gorselYenile);
+  }, 6000);
+</script>
+</body>
+</html>

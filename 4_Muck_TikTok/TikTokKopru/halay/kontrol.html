@@ -1,0 +1,663 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Kurt Halayı Kontrol</title>
+<style>
+  :root { --zemin: #140910; --kart: #21111a; --cizgi: #3d2230; --yazi: #f6e9ef; --soluk: #b49aa8; --altin: #ffd77a; --pembe: #ff4f9a; --yesil: #4caf50; }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--zemin); color: var(--yazi); font: 15px/1.45 'Segoe UI', Inter, Arial, sans-serif; }
+  header { padding: 16px 22px; display: flex; align-items: center; flex-wrap: wrap; border-bottom: 1px solid var(--cizgi);
+    background: linear-gradient(90deg, #2a0e1c, #3a1a08); }
+  header h1 { margin: 0 18px 0 0; font-size: 22px; color: var(--altin); letter-spacing: 1px; }
+  .rozet { display: inline-block; padding: 3px 10px; border-radius: 12px; font-size: 13px; font-weight: 700; background: #5a1d1d; color: #ffc4c4; margin-right: 8px; }
+  .rozet.ok { background: #1d4a22; color: #b8f5bf; }
+  main { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: 18px; padding: 18px 22px; max-width: 1300px; }
+  @media (max-width: 900px) { main { grid-template-columns: 1fr; } }
+  .kart { background: var(--kart); border: 1px solid var(--cizgi); border-radius: 14px; padding: 16px; margin-bottom: 18px; }
+  .kart h2 { margin: 0 0 12px; font-size: 16px; color: var(--altin); letter-spacing: .5px; }
+  button { font: inherit; font-weight: 700; color: var(--yazi); background: #3a2030; border: 1px solid #5a3346; border-radius: 10px;
+    padding: 8px 14px; cursor: pointer; }
+  button:hover { background: #4a2a3d; }
+  button.ana { background: var(--pembe); border-color: var(--pembe); color: #fff; }
+  button.ana:hover { filter: brightness(1.1); }
+  button.tehlike { background: #5a1d1d; border-color: #8a2d2d; }
+  .satir { display: flex; align-items: center; flex-wrap: wrap; }
+  .satir > * { margin: 0 8px 8px 0; }
+  #calan { font-size: 20px; font-weight: 800; margin-bottom: 4px; min-height: 30px; }
+  #ilerleme { height: 8px; border-radius: 4px; background: #3a2030; overflow: hidden; margin: 8px 0 12px; }
+  #ilerleme i { display: block; height: 100%; width: 0; background: linear-gradient(90deg, var(--altin), var(--pembe)); }
+  #liste { list-style: none; margin: 0; padding: 0; max-height: 52vh; overflow: auto; }
+  #liste li { display: flex; align-items: center; padding: 8px 10px; border-radius: 10px; border: 1px solid transparent; }
+  #liste li:hover { background: #2c1823; }
+  #liste li.aktif { border-color: var(--pembe); background: #351a29; }
+  #liste li .ad { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 600; }
+  #liste li .bpm { width: 84px; text-align: right; color: var(--soluk); font-variant-numeric: tabular-nums; margin-right: 10px; }
+  #liste li button { padding: 5px 12px; }
+  .bos { color: var(--soluk); padding: 10px; }
+  input[type=number], input[type=text] { width: 90px; font: inherit; color: var(--yazi); background: #2c1823; border: 1px solid #5a3346; border-radius: 8px; padding: 6px 8px; }
+  input[type=range] { width: 160px; }
+  input[type=text] { width: 260px; }
+  #ytAdres { flex: 1; min-width: 200px; }
+  #ytKutu { width: 100%; aspect-ratio: 16 / 9; background: #000; border-radius: 10px; overflow: hidden; margin: 6px 0 10px; display: none; }
+  #ytKutu iframe, #ytKutu > div { width: 100%; height: 100%; border: 0; }
+  #ritimBtn.dinliyor { background: #1f6f3a; border-color: #4caf50; }
+  .satir label { min-width: 120px; }
+  label { color: var(--soluk); }
+  .ipucu { color: var(--soluk); font-size: 13px; }
+  code { background: #2c1823; padding: 2px 6px; border-radius: 6px; color: #ffd9a8; word-break: break-all; }
+  #vurusBtn { font-size: 18px; padding: 12px 22px; }
+  .segment button { border-radius: 0; margin: 0; }
+  .segment button:first-child { border-radius: 10px 0 0 10px; }
+  .segment button:last-child { border-radius: 0 10px 10px 0; }
+  .segment button.secili { background: var(--altin); color: #2a1200; border-color: var(--altin); }
+</style>
+</head>
+<body>
+<header>
+  <h1>🐺 Kurt Halayı — Kontrol</h1>
+  <span id="kopruDurum" class="rozet">Köprü: bağlanıyor…</span>
+  <span id="sahneDurum" class="rozet">Sahne: yok</span>
+  <span id="sahneBilgi" class="ipucu"></span>
+</header>
+
+<main>
+  <section>
+    <div class="kart">
+      <h2>📺 YouTube listesi</h2>
+      <div class="satir">
+        <input type="text" id="ytAdres" placeholder="YouTube oynatma listesi linki">
+        <button id="ytYukle" class="ana">▶ Listeyi çal</button>
+      </div>
+      <div id="ytKutu"><div id="ytOyuncu"></div></div>
+      <div class="satir">
+        <button id="ytOnceki">⏮ Önceki</button><button id="ytDur">⏯ Duraklat</button><button id="ytSonraki">⏭ Sonraki</button>
+        <label><input type="checkbox" id="ytKarisik"> Karışık</label>
+      </div>
+      <div class="ipucu" id="ytBilgi">Listeyi çal'a bas; şarkı bu sayfada çalar.</div>
+      <div class="satir" style="margin-top:10px">
+        <button id="ritimBtn" class="ana">🎧 Ritmi canlı dinle</button>
+        <span class="ipucu" id="ritimBilgi">Basınca Chrome "bu sekmeyi paylaş" sorar: <b>Sekme sesini de paylaş</b> işaretli olsun, <b>Paylaş</b>. Kurtlar şarkı hızlanınca hızlanır, yavaşlayınca yavaşlar.</span>
+      </div>
+    </div>
+
+    <div class="kart">
+      <h2>🎵 Şarkılar</h2>
+      <div id="calan">—</div>
+      <div class="ipucu" id="calanBilgi"></div>
+      <div id="ilerleme"><i></i></div>
+      <div class="satir">
+        <button id="durBtn">⏹ Durdur</button>
+        <button id="sonrakiBtn">⏭ Sonraki</button>
+        <label><input type="checkbox" id="otomatik" checked> Bitince sıradaki</label>
+        <label><input type="checkbox" id="karisik"> Karışık</label>
+        <button id="yenileBtn">↻ Listeyi yenile</button>
+      </div>
+      <div class="satir">
+        <label>Ses</label><input type="range" id="sesAyar" min="0" max="1" step="0.01" value="0.9">
+        <span class="segment"><button id="cikisSahne" class="secili">Ses: Sahnede</button><button id="cikisBurada">Ses: Bu sayfada</button></span>
+      </div>
+      <ul id="liste"><li class="bos">Yükleniyor…</li></ul>
+      <p class="ipucu">Şarkılarını (mp3, m4a, ogg, wav) bu klasöre at, sonra <b>Listeyi yenile</b>:<br><code id="klasor">Masaüstü\Muck_TikTok_Yayin\TikTokKopru\halay\muzik</code></p>
+    </div>
+
+    <div class="kart">
+      <h2>🥁 Tempo (dansçılar ritme uysun)</h2>
+      <div class="satir">
+        <label>BPM</label><input type="number" id="bpm" min="50" max="200" step="1" value="96">
+        <button id="bpmEksi">−</button><button id="bpmArti">+</button>
+        <button id="bpmYariBtn">÷2</button><button id="bpmIkiBtn">×2</button>
+        <button id="bpmBulBtn">🔍 Otomatik bul</button>
+      </div>
+      <div class="satir">
+        <button id="vurusBtn" class="ana">👏 Ritme bas (8 kez)</button>
+        <span class="ipucu" id="vurusBilgi">Davulun her vuruşunda bu tuşa (ya da boşluk tuşuna) bas.</span>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="kart">
+      <h2>🎁 Hediye kuralları</h2>
+      <div class="satir">
+        <label>🌹 Halaya katılır</label><input type="text" id="gulAd" value="Rose, Gül">
+      </div>
+      <div class="satir">
+        <label>🍩 Ortada oyun</label><input type="text" id="donutAd" value="Doughnut, Donut">
+      </div>
+      <div class="satir">
+        <label>☕ Alfa / Leydi</label><input type="text" id="cayAd" value="Tea, Çay">
+      </div>
+      <div class="satir">
+        <label>💸 Gelin damada para</label><input type="text" id="paraAd" value="Money Gun, Para Tabancası">
+      </div>
+      <div class="satir">
+        <label>❤️ Beğeniyle halaya katıl</label><input type="number" id="begeniKatil" min="1" step="50" value="500" style="width:90px"><span class="ipucu">beğeni</span>
+      </div>
+      <div class="satir">
+        <label>🔥 Halay Başı (toplam jeton)</label><input type="number" id="basiFiyat" min="1" step="1" value="300" style="width:90px">
+        <button id="fiyatKaydet" class="ana">Kaydet</button>
+      </div>
+      <p class="ipucu">Hediye adlarını virgülle yaz (Türkçe ya da İngilizce, büyük/küçük harf fark etmez).
+        <b>Gül</b> atan halaya katılır, <b>Donut</b> atan ortada Donut Kapmaca oynar, <b>Çay</b> atan Alfa Kurt ya da Leydi Alfa olur
+        (yoruma <b>alfa</b> / <b>leydi</b> yazan o koltuğa geçer; ikisi de doluysa en eski oturan koltuğu kaptırır).
+        Yorum yazmak kimseyi halaya katmaz. Toplam hediyesi halay başı fiyatını geçen halaydaki kurt mendili alır.</p>
+      <p class="ipucu">Son gelen hediyeler: <span id="sonHediyeler">—</span></p>
+      <div class="satir">
+        <button id="damatIndir" class="tehlike">Alfayı indir</button>
+        <button id="gelinIndir" class="tehlike">Leydiyi indir</button>
+        <button id="basiIndir" class="tehlike">Halay başını indir</button>
+        <button id="sifirlaBtn" class="tehlike">Halayı ve oyunu sıfırla</button>
+      </div>
+    </div>
+
+    <div class="kart">
+      <h2>🌲 Orman sesleri</h2>
+      <div class="satir">
+        <label><input type="checkbox" id="ortamAcik" checked> Cırcır böceği, ateş çıtırtısı, baykuş</label>
+      </div>
+      <div class="satir">
+        <label>Orman</label><input type="range" id="ortamSes" min="0" max="1" step="0.01" value="0.5">
+        <label>Uluma</label><input type="range" id="efektSes" min="0" max="1" step="0.01" value="0.8">
+        <button id="uluBtn" class="ana">🐺 Şimdi ulusunlar</button>
+      </div>
+      <p class="ipucu">Alfa ya da leydi varken 40 sn'de bir, yokken 75 sn'de bir sürü aya uluyor. Bu sesler de müzik gibi <b>Ses: Sahnede / Bu sayfada</b> seçimine göre çalar.</p>
+    </div>
+
+    <div class="kart">
+      <h2>🧪 Test (yayına çıkmadan dene)</h2>
+      <div class="satir">
+        <button data-test="gul">🌹 Gül → halay</button>
+        <button data-test="donut">🍩 Donut → ortada oyun</button>
+        <button data-test="donut2">🍩 Aynı kişi yine donut</button>
+        <button data-test="damat">☕ Çay → Alfa Kurt</button>
+        <button data-test="gelin">☕ Çay → Leydi Alfa</button>
+        <button data-test="basi">🔥 Halay başı (300 jeton)</button>
+        <button data-test="buyuk">🎆 Büyük (500)</button>
+        <button data-test="kalabalik">👥 10 kişi</button>
+        <button data-test="begeni">❤ Beğeni</button>
+        <button data-test="begeni500">❤ 500 beğeni → halay</button>
+        <button data-test="para">💸 Para saç</button>
+        <button data-test="yorum">💬 Yorum</button>
+      </div>
+    </div>
+
+    <div class="kart">
+      <h2>📺 LIVE Studio</h2>
+      <p class="ipucu">Kaynak ekle → <b>Bağlantı</b> → şu adresi yapıştır:</p>
+      <p><code id="sahneAdres"></code></p>
+      <p class="ipucu">Bilgisayar zorlanırsa adresin sonuna <code>?kalite=dusuk</code> ekle.
+        Sahnenin sesi yayına gitmezse yukarıdan <b>Ses: Bu sayfada</b> seç; müzik bu sekmede çalar, LIVE Studio masaüstü sesini alır.</p>
+    </div>
+  </section>
+</main>
+
+<audio id="yerelSes" preload="auto"></audio>
+
+<script src="/halay/ses.js"></script>
+<script>
+(function () {
+  'use strict';
+  var $ = function (id) { return document.getElementById(id); };
+  var KAYIT = 'halayKontrol.v1';
+  var kayit = { bpm: {}, ses: 0.9, cikis: 'sahne', otomatik: true, karisik: false, fiyat: { damat: 1000, gelin: 1000, halaybasi: 300 }, hediyeAd: { gul: 'Rose, Gül', donut: 'Doughnut, Donut', cay: 'Tea, Çay', para: 'Money Gun, Para Tabancası' }, begeniKatil: 500, ortam: { acik: true, ses: 0.5, efekt: 0.8 } };
+  try { var k = JSON.parse(localStorage.getItem(KAYIT) || 'null'); if (k) for (var a in k) kayit[a] = k[a]; } catch (e) { }
+  if (!kayit.fiyat.halaybasi) kayit.fiyat.halaybasi = 300;
+  if (!kayit.ortam) kayit.ortam = { acik: true, ses: 0.5, efekt: 0.8 };
+  if (!kayit.hediyeAd) kayit.hediyeAd = { gul: 'Rose, Gül', donut: 'Doughnut, Donut', cay: 'Tea, Çay' };
+  function kaydet() { try { localStorage.setItem(KAYIT, JSON.stringify(kayit)); } catch (e) { } }
+
+  var sarkilar = [], calan = null, calanIdx = -1, baslangic = 0, yerel = $('yerelSes');
+  var sahneAdres = 'http://127.0.0.1.nip.io:' + (location.port || '21213') + '/halay';
+  $('sahneAdres').textContent = sahneAdres;
+
+  // ---------------- baglanti
+  var ws = null;
+  function gonder(o) { if (ws && ws.readyState === 1) ws.send(JSON.stringify(o)); }
+  function baglan() {
+    ws = new WebSocket('ws://' + location.host);
+    ws.onopen = function () { $('kopruDurum').textContent = 'Köprü: bağlı'; $('kopruDurum').className = 'rozet ok'; gonder({ tur: 'halayDurumIste' }); muzikGonder(); ortamGonder(); ayarGonder(); };
+    ws.onclose = function () { $('kopruDurum').textContent = 'Köprü: kapalı'; $('kopruDurum').className = 'rozet'; setTimeout(baglan, 2000); };
+    ws.onmessage = function (ev) {
+      var m; try { m = JSON.parse(ev.data); } catch (e) { return; }
+      if (m.tur === 'halaySahne') {
+        sonSahne = Date.now();
+        $('sahneDurum').textContent = 'Sahne: açık'; $('sahneDurum').className = 'rozet ok';
+        $('sahneBilgi').textContent = '🐺 ' + m.kisi + ' kurt · 🍩 ' + (m.oyun || 0) + ' oyuncu · 🔥 ' + (m.halaybasi || '—') + ' · 🐺 ' + (m.damat || '—') + ' · 🌙 ' + (m.gelin || '—');
+      } else if (m.tur === 'hediye' && !m.test) {
+        sonHediyeler.unshift((m.hediye || '?') + ' (' + (m.jeton || 1) + ')');
+        sonHediyeler = sonHediyeler.filter(function (x, i, a) { return a.indexOf(x) === i; }).slice(0, 8);
+        $('sonHediyeler').textContent = sonHediyeler.join(' · ');
+      } else if (m.tur === 'halayUluma') {
+        if (kayit.cikis === 'burada' && window.HalaySes) HalaySes.koro(!!m.alfa, !!m.leydi, Number(m.suru) || 0);
+      } else if (m.tur === 'halayBitti') {
+        if (kayit.cikis === 'sahne' && calan && m.calan === adGoster(calan) && kayit.otomatik) sonraki();
+      } else if (m.tur === 'durum') {
+        $('kopruDurum').textContent = 'TikTok: ' + (m.bagli ? 'bağlı' : 'bekliyor'); $('kopruDurum').className = 'rozet' + (m.bagli ? ' ok' : '');
+      }
+    };
+  }
+  var sonSahne = 0;
+  setInterval(function () { if (Date.now() - sonSahne > 9000) { $('sahneDurum').textContent = 'Sahne: kapalı'; $('sahneDurum').className = 'rozet'; } }, 3000);
+
+  // ---------------- sarki listesi
+  function adGoster(f) { return String(f).replace(/\.[^.]+$/, ''); }
+  function listeYukle() {
+    fetch('/halay/muzik-listesi').then(function (c) { return c.json(); }).then(function (l) { sarkilar = l; listeCiz(); }).catch(function () { $('liste').innerHTML = '<li class="bos">Liste alınamadı.</li>'; });
+  }
+  function listeCiz() {
+    var ul = $('liste');
+    if (!sarkilar.length) { ul.innerHTML = '<li class="bos">Klasörde şarkı yok. Aşağıdaki klasöre mp3 at, sonra Listeyi yenile.</li>'; return; }
+    ul.innerHTML = '';
+    sarkilar.forEach(function (f, i) {
+      var li = document.createElement('li');
+      if (f === calan) li.className = 'aktif';
+      var b = kayit.bpm[f];
+      li.innerHTML = '<span class="ad"></span><span class="bpm">' + (b ? Math.round(b.bpm) + ' BPM' : '') + '</span><button>▶ Çal</button>';
+      li.querySelector('.ad').textContent = adGoster(f);
+      li.querySelector('button').onclick = function () { cal(i); };
+      ul.appendChild(li);
+    });
+  }
+
+  // ---------------- calma
+  function url(f) { return '/halay/muzik/' + encodeURIComponent(f); }
+  function cal(i) {
+    if (i < 0 || i >= sarkilar.length) return;
+    if (yt.oyuncu && yt.caliyor) { yt.caliyor = false; try { yt.oyuncu.pauseVideo(); } catch (e) { } }
+    calanIdx = i; calan = sarkilar[i];
+    var b = kayit.bpm[calan];
+    $('bpm').value = b ? Math.round(b.bpm * 10) / 10 : 96;
+    baslangic = Date.now();
+    if (kayit.cikis === 'burada') { yerel.src = url(calan); yerel.currentTime = 0; yerel.volume = kayit.ses; yerel.play(); }
+    else yerel.pause();
+    muzikGonder();
+    listeCiz();
+    if (!b) bpmBul(calan);
+  }
+  function durdur() { calan = null; calanIdx = -1; yerel.pause(); muzikGonder(); listeCiz(); }
+  function sonraki() {
+    if (!sarkilar.length) return;
+    var i = kayit.karisik ? Math.floor(Math.random() * sarkilar.length) : (calanIdx + 1) % sarkilar.length;
+    cal(i);
+  }
+  function muzikGonder() {
+    if (yt.caliyor) {
+      gonder({ tur: 'halayMuzik', durum: 'cal', calan: '📺 ' + yt.ad, url: '', bpm: yt.bpm, faz: yt.faz, baslangic: yt.baslangic, cikis: 'burada', ses: kayit.ses });
+      return;
+    }
+    var b = calan ? kayit.bpm[calan] : null;
+    if (kayit.cikis === 'burada' && calan && !yerel.paused) baslangic = Date.now() - yerel.currentTime * 1000;
+    gonder({
+      tur: 'halayMuzik', durum: calan ? 'cal' : 'dur', calan: calan ? adGoster(calan) : null, url: calan ? url(calan) : '',
+      bpm: Number($('bpm').value) || 96, faz: b ? (b.faz || 0) : 0, baslangic: baslangic, cikis: kayit.cikis, ses: kayit.ses
+    });
+  }
+  yerel.addEventListener('ended', function () { if (kayit.otomatik) sonraki(); });
+  // sure / ilerleme
+  var sureOnb = {};
+  function sureBul(f) {
+    if (sureOnb[f]) return;
+    var a = new Audio(); a.preload = 'metadata'; a.src = url(f);
+    a.onloadedmetadata = function () { sureOnb[f] = a.duration; };
+  }
+  setInterval(function () {
+    if (!calan && yt.oyuncu && yt.oyuncu.getCurrentTime && yt.id) {   // YouTube'dan caliyor
+      var g = yt.oyuncu.getCurrentTime() || 0, su = yt.oyuncu.getDuration() || 0;
+      $('calan').textContent = '📺 ' + yt.ad + (yt.caliyor ? '' : ' (duraklatıldı)');
+      $('calanBilgi').textContent = zaman(g) + (su ? ' / ' + zaman(su) : '') + ' · ' + yt.bpm + ' BPM · YouTube, ses bu sayfada';
+      $('ilerleme').firstChild.style.width = su ? Math.min(100, g / su * 100) + '%' : '0';
+      return;
+    }
+    if (!calan) { $('calan').textContent = '—'; $('calanBilgi').textContent = ''; $('ilerleme').firstChild.style.width = '0'; return; }
+    sureBul(calan);
+    var gecen = kayit.cikis === 'burada' ? yerel.currentTime : (Date.now() - baslangic) / 1000;
+    var sure = sureOnb[calan] || 0;
+    $('calan').textContent = '♫ ' + adGoster(calan);
+    $('calanBilgi').textContent = zaman(gecen) + (sure ? ' / ' + zaman(sure) : '') + ' · ' + $('bpm').value + ' BPM · ses ' + (kayit.cikis === 'sahne' ? 'sahnede' : 'bu sayfada');
+    $('ilerleme').firstChild.style.width = sure ? Math.min(100, gecen / sure * 100) + '%' : '0';
+    // sahne kapaliyken ses sahnede secili ise yine de siradakine gec
+    if (kayit.cikis === 'sahne' && sure && gecen > sure + 3 && kayit.otomatik && Date.now() - sonSahne > 9000) sonraki();
+  }, 500);
+  setInterval(function () { if (calan || yt.caliyor) muzikGonder(); }, 5000);   // gec acilan sahne icin
+  function zaman(s) { s = Math.max(0, Math.floor(s)); return Math.floor(s / 60) + ':' + ('0' + (s % 60)).slice(-2); }
+
+  // ---------------- otomatik BPM
+  function bpmBul(f) {
+    $('vurusBilgi').textContent = '🔍 "' + adGoster(f) + '" temposu hesaplanıyor…';
+    var Ctx = window.AudioContext || window.webkitAudioContext;
+    var ctx = new Ctx();
+    fetch(url(f)).then(function (c) { return c.arrayBuffer(); }).then(function (buf) {
+      return new Promise(function (ok, red) { ctx.decodeAudioData(buf, ok, red); });
+    }).then(function (ses) {
+      var sonuc = tempoAnaliz(ses);
+      kayit.bpm[f] = sonuc; kaydet();
+      if (f === calan) { $('bpm').value = Math.round(sonuc.bpm * 10) / 10; muzikGonder(); }
+      $('vurusBilgi').textContent = '✓ ' + adGoster(f) + ': ' + Math.round(sonuc.bpm) + ' BPM bulundu. Yanlışsa ÷2 / ×2 ya da Ritme bas.';
+      listeCiz();
+      ctx.close();
+    }).catch(function () { $('vurusBilgi').textContent = 'Tempo bulunamadı, Ritme bas ile ayarla.'; });
+  }
+  function tempoAnaliz(ses) {
+    var sr = ses.sampleRate, veri = ses.getChannelData(0);
+    var bas = Math.floor(Math.min(ses.duration * 0.1, 15) * sr), son = Math.min(veri.length, bas + 60 * sr);
+    var hop = 512, fps = sr / hop, y = 0, zarf = [], toplam = 0, n = 0;
+    for (var i = bas; i < son; i++) {
+      y += 0.04 * (veri[i] - y);   // dusuk geciren: davul
+      toplam += y * y; n++;
+      if (n === hop) { zarf.push(Math.sqrt(toplam / hop)); toplam = 0; n = 0; }
+    }
+    var onset = new Float32Array(zarf.length);
+    for (var j = 1; j < zarf.length; j++) onset[j] = Math.max(0, zarf[j] - zarf[j - 1]);
+    var enIyi = 0, enIyiLag = 0;
+    var minLag = Math.floor(60 * fps / 160), maxLag = Math.ceil(60 * fps / 70);
+    for (var lag = minLag; lag <= maxLag; lag++) {
+      var s = 0;
+      for (var k = 0; k + lag < onset.length; k++) s += onset[k] * onset[k + lag];
+      if (lag * 2 < onset.length) { var s2 = 0; for (var k2 = 0; k2 + lag * 2 < onset.length; k2++) s2 += onset[k2] * onset[k2 + lag * 2]; s += s2 * 0.5; }
+      if (s > enIyi) { enIyi = s; enIyiLag = lag; }
+    }
+    var bpm = 60 * fps / Math.max(1, enIyiLag);
+    while (bpm < 75) bpm *= 2;
+    while (bpm > 155) bpm /= 2;
+    // faz: vuruslarin en guclu oldugu kayma
+    var lagG = 60 * fps / bpm, enFaz = 0, enFazSkor = -1;
+    for (var p = 0; p < lagG; p++) {
+      var sk = 0;
+      for (var x = p; x < onset.length; x += lagG) sk += onset[Math.round(x)] || 0;
+      if (sk > enFazSkor) { enFazSkor = sk; enFaz = p; }
+    }
+    return { bpm: bpm, faz: (bas / sr + enFaz / fps) % (60 / bpm) };
+  }
+
+  // ---------------- ritme bas (tap tempo)
+  var vuruslar = [];
+  function vurus() {
+    var t = Date.now();
+    if (vuruslar.length && t - vuruslar[vuruslar.length - 1] > 2000) vuruslar = [];
+    vuruslar.push(t);
+    if (vuruslar.length > 12) vuruslar.shift();
+    if (vuruslar.length >= 4) {
+      var ara = (vuruslar[vuruslar.length - 1] - vuruslar[0]) / (vuruslar.length - 1);
+      var bpm = Math.round(60000 / ara * 10) / 10;
+      $('bpm').value = bpm;
+      var faz = calan ? (((t - baslangic) / 1000) % (60 / bpm)) : (yt.caliyor ? (((t - yt.baslangic) / 1000) % (60 / bpm)) : 0);
+      if (yt.caliyor) { yt.bpm = bpm; yt.faz = faz; ritim.tahmin = []; ytBpmKaydet(); }
+      if (calan) { kayit.bpm[calan] = { bpm: bpm, faz: faz }; kaydet(); listeCiz(); }
+      gonder({ tur: 'halayVurus', bpm: bpm, faz: faz });
+      $('vurusBilgi').textContent = '👏 ' + vuruslar.length + ' vuruş → ' + bpm + ' BPM';
+    } else $('vurusBilgi').textContent = '👏 ' + vuruslar.length + ' vuruş… devam';
+  }
+  $('vurusBtn').onclick = vurus;
+  document.addEventListener('keydown', function (e) { if (e.code === 'Space' && e.target.tagName !== 'INPUT') { e.preventDefault(); vurus(); } });
+
+  function bpmAyarla(v) {
+    v = Math.max(40, Math.min(220, Math.round(v * 10) / 10));
+    $('bpm').value = v;
+    if (calan) { var b = kayit.bpm[calan] || { faz: 0 }; b.bpm = v; kayit.bpm[calan] = b; kaydet(); listeCiz(); }
+    if (yt.caliyor) { yt.bpm = v; ritim.tahmin = []; ytBpmKaydet(); }
+    gonder({ tur: 'halayVurus', bpm: v });
+  }
+  $('bpm').onchange = function () { bpmAyarla(Number($('bpm').value) || 96); };
+  $('bpmEksi').onclick = function () { bpmAyarla(Number($('bpm').value) - 1); };
+  $('bpmArti').onclick = function () { bpmAyarla(Number($('bpm').value) + 1); };
+  $('bpmYariBtn').onclick = function () { bpmAyarla(Number($('bpm').value) / 2); };
+  $('bpmIkiBtn').onclick = function () { bpmAyarla(Number($('bpm').value) * 2); };
+  $('bpmBulBtn').onclick = function () { if (calan) bpmBul(calan); };
+
+  // ---------------- YouTube listesi
+  var VARSAYILAN_LISTE = 'https://www.youtube.com/playlist?list=PLfjVgAm0KExOiA7Po_3gzUiFFE3COTAre';
+  var yt = { oyuncu: null, caliyor: false, id: null, ad: '', baslangic: 0, bpm: 96, faz: 0, karistirildi: false };
+  if (!kayit.yt) kayit.yt = { adres: VARSAYILAN_LISTE, karisik: false };
+  $('ytAdres').value = kayit.yt.adres || VARSAYILAN_LISTE;
+  $('ytKarisik').checked = !!kayit.yt.karisik;
+  function listeId(s) {
+    s = String(s || '').trim();
+    var m = s.match(/[?&]list=([\w-]+)/);
+    return m ? m[1] : (/^[\w-]{12,}$/.test(s) ? s : null);
+  }
+  function ytApi(cb) {
+    if (window.YT && YT.Player) { cb(); return; }
+    window.onYouTubeIframeAPIReady = cb;
+    if (!document.getElementById('ytApiBetik')) { var s = document.createElement('script'); s.id = 'ytApiBetik'; s.src = 'https://www.youtube.com/iframe_api'; document.head.appendChild(s); }
+  }
+  function ytBaslat() {
+    var id = listeId($('ytAdres').value);
+    if (!id) { $('ytBilgi').textContent = 'Link tanınmadı. İçinde "list=" olan oynatma listesi linkini yapıştır.'; return; }
+    kayit.yt.adres = $('ytAdres').value.trim(); kaydet();
+    if (calan) durdur();
+    $('ytKutu').style.display = 'block';
+    $('ytBilgi').textContent = 'Liste yükleniyor…';
+    yt.karistirildi = false;
+    ytApi(function () {
+      if (yt.oyuncu && yt.oyuncu.loadPlaylist) { yt.oyuncu.loadPlaylist({ list: id, listType: 'playlist', index: 0 }); return; }
+      yt.oyuncu = new YT.Player('ytOyuncu', {
+        width: '100%', height: '100%',
+        playerVars: { listType: 'playlist', list: id, autoplay: 1, rel: 0, playsinline: 1 },
+        events: {
+          onReady: function (e) { e.target.setVolume(Math.round(kayit.ses * 100)); e.target.setLoop(true); e.target.playVideo(); },
+          onStateChange: ytDurum,
+          onError: function (e) {
+            $('ytBilgi').textContent = 'Bu şarkı burada çalınamıyor (hata ' + e.data + '), sıradakine geçiliyor…';
+            setTimeout(function () { try { yt.oyuncu.nextVideo(); } catch (x) { } }, 1500);
+          }
+        }
+      });
+    });
+  }
+  function ytBpmKaydet() { if (yt.id) { kayit.bpm['yt:' + yt.id] = { bpm: yt.bpm, faz: 0 }; kaydet(); } }
+  function ytDurum(e) {
+    if (e.data === YT.PlayerState.PLAYING) {
+      if (!yt.karistirildi) { yt.karistirildi = true; if (kayit.yt.karisik) { yt.oyuncu.setShuffle(true); } }
+      var v = yt.oyuncu.getVideoData() || {};
+      if (v.video_id !== yt.id) {   // yeni sarki: bilinen tempo varsa ondan basla
+        yt.id = v.video_id; yt.ad = v.title || 'YouTube';
+        var b = kayit.bpm['yt:' + yt.id];
+        yt.bpm = b ? b.bpm : (yt.bpm || 96); yt.faz = 0; ritim.tahmin = [];
+        $('bpm').value = Math.round(yt.bpm * 10) / 10;
+      }
+      yt.baslangic = Date.now() - yt.oyuncu.getCurrentTime() * 1000;
+      yt.caliyor = true;
+      if (calan) { calan = null; calanIdx = -1; yerel.pause(); listeCiz(); }
+      if (kayit.cikis !== 'burada') cikisSec('burada');   // ses bu sayfada (YouTube burada caliyor)
+      $('calan').textContent = '📺 ' + yt.ad;
+      $('ytBilgi').textContent = '♫ ' + yt.ad + (ritim.akim ? '' : ' · tempo için "Ritmi canlı dinle"ye bas');
+      muzikGonder();
+    } else if (e.data === YT.PlayerState.PAUSED || e.data === YT.PlayerState.ENDED) {
+      yt.caliyor = false;
+      muzikGonder();
+    }
+  }
+  $('ytYukle').onclick = ytBaslat;
+  $('ytOnceki').onclick = function () { if (yt.oyuncu) yt.oyuncu.previousVideo(); };
+  $('ytSonraki').onclick = function () { if (yt.oyuncu) yt.oyuncu.nextVideo(); };
+  $('ytDur').onclick = function () { if (!yt.oyuncu) { ytBaslat(); return; } if (yt.caliyor) yt.oyuncu.pauseVideo(); else yt.oyuncu.playVideo(); };
+  $('ytKarisik').onchange = function () { kayit.yt.karisik = this.checked; kaydet(); if (yt.oyuncu && yt.oyuncu.setShuffle) yt.oyuncu.setShuffle(this.checked); };
+
+  // ---------------- canli ritim: bu sekmenin sesini dinler, tempoyu ve vurus anini bulur
+  var ritim = { akim: null, ctx: null, zarf: [], n: 0, t0: 0, fps: 94, onceki: 0, tahmin: [], tmr: null, sessiz: 0 };
+  function ritimKapat() {
+    if (ritim.akim) ritim.akim.getTracks().forEach(function (t) { t.stop(); });
+    if (ritim.ctx) ritim.ctx.close();
+    clearInterval(ritim.tmr);
+    ritim.akim = null; ritim.ctx = null; ritim.zarf = [];
+    $('ritimBtn').className = 'ana'; $('ritimBtn').textContent = '🎧 Ritmi canlı dinle';
+    $('ritimBilgi').textContent = 'Dinleme kapalı. Tempo sabit kalır (BPM kutusu / Ritme bas ile ayarlanır).';
+  }
+  function ritimAc() {
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getDisplayMedia) { $('ritimBilgi').textContent = 'Bu tarayıcı sekme sesini veremiyor; Chrome ya da Edge kullan.'; return; }
+    navigator.mediaDevices.getDisplayMedia({
+      video: true, audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false },
+      preferCurrentTab: true, selfBrowserSurface: 'include', systemAudio: 'include'
+    }).then(function (akim) {
+      akim.getVideoTracks().forEach(function (t) { t.stop(); });
+      var ses = akim.getAudioTracks();
+      if (!ses.length) { akim.getTracks().forEach(function (t) { t.stop(); }); $('ritimBilgi').textContent = 'Ses gelmedi: tekrar bas ve "Sekme sesini de paylaş" kutusunu işaretle.'; return; }
+      ritim.akim = akim;
+      ses[0].onended = ritimKapat;
+      var ctx = ritim.ctx = new (window.AudioContext || window.webkitAudioContext)();
+      var kaynak = ctx.createMediaStreamSource(new MediaStream(ses));
+      var alcak = ctx.createBiquadFilter(); alcak.type = 'lowpass'; alcak.frequency.value = 170;   // davul
+      var birles = ctx.createChannelMerger(2);
+      kaynak.connect(alcak); alcak.connect(birles, 0, 0); kaynak.connect(birles, 0, 1);
+      var isle = ctx.createScriptProcessor(512, 2, 1);
+      var sus = ctx.createGain(); sus.gain.value = 0;   // tekrar calmasin, sadece dinle
+      birles.connect(isle); isle.connect(sus); sus.connect(ctx.destination);
+      ritim.fps = ctx.sampleRate / 512; ritim.n = 0; ritim.zarf = []; ritim.t0 = 0; ritim.tahmin = [];
+      isle.onaudioprocess = function (ev) {
+        var a = ev.inputBuffer.getChannelData(0), b = ev.inputBuffer.getChannelData(1), ea = 0, eb = 0;
+        for (var i = 0; i < a.length; i++) { ea += a[i] * a[i]; eb += b[i] * b[i]; }
+        var e = Math.log(1 + 60 * Math.sqrt(ea / a.length)) + 0.45 * Math.log(1 + 60 * Math.sqrt(eb / b.length));
+        if (!ritim.t0) ritim.t0 = Date.now() - 1000 * a.length / ctx.sampleRate;
+        ritim.zarf.push(Math.max(0, e - ritim.onceki)); ritim.onceki = e; ritim.n++;
+        ritim.sessiz = eb / b.length < 1e-7 ? ritim.sessiz + 1 : 0;
+        var maks = Math.round(ritim.fps * 9);
+        if (ritim.zarf.length > maks) ritim.zarf.splice(0, ritim.zarf.length - maks);
+      };
+      ritim.tmr = setInterval(ritimAnaliz, 1000);
+      $('ritimBtn').className = 'ana dinliyor'; $('ritimBtn').textContent = '🎧 Dinleniyor (kapat)';
+      $('ritimBilgi').textContent = 'Ritim dinleniyor… birkaç saniyede tempo bulunur.';
+    }).catch(function () { $('ritimBilgi').textContent = 'Paylaşım iptal edildi. Tekrar bas, "Bu sekme" + "Sekme sesini de paylaş".'; });
+  }
+  $('ritimBtn').onclick = function () { if (ritim.akim) ritimKapat(); else ritimAc(); };
+  function ritimAnaliz() {
+    var o = ritim.zarf, F = ritim.fps, L = o.length;
+    var ref = yt.caliyor ? yt.baslangic : (calan && kayit.cikis === 'burada' ? baslangic : 0);
+    if (!ref) { $('ritimBilgi').textContent = '🎧 Dinleniyor · şarkı bekleniyor'; return; }
+    if (L < F * 4) return;
+    if (ritim.sessiz > F) { $('ritimBilgi').textContent = '🎧 Dinleniyor · ses yok (şarkı duraklamış olabilir)'; return; }
+    // otokorelasyon: 70-165 BPM arasi en guclu tekrar
+    var minLag = Math.floor(60 * F / 165), maxLag = Math.ceil(60 * F / 70), skor = [], top = 0, enIyi = -1, enLag = 0;
+    for (var lag = minLag; lag <= maxLag + 1; lag++) {
+      var s = 0, c = 0;
+      for (var i = 0; i + lag < L; i++) { s += o[i] * o[i + lag]; c++; }
+      var s2 = 0, c2 = 0;
+      for (var j = 0; j + 2 * lag < L; j++) { s2 += o[j] * o[j + 2 * lag]; c2++; }
+      var v = s / Math.max(1, c) + 0.5 * s2 / Math.max(1, c2);
+      skor[lag] = v; top += v;
+      if (lag <= maxLag && v > enIyi) { enIyi = v; enLag = lag; }
+    }
+    var ort = top / (maxLag - minLag + 2);
+    if (!(enIyi > ort * 1.12)) { $('ritimBilgi').textContent = '🎧 Dinleniyor · ritim net değil, tempo korunuyor (' + Math.round(yt.bpm || 96) + ' BPM)'; return; }
+    var a = skor[enLag - 1] || 0, b = skor[enLag], cc = skor[enLag + 1] || 0, pay = a - 2 * b + cc;
+    var ince = pay < 0 ? enLag + 0.5 * (a - cc) / pay : enLag;   // parabolik iyilestirme
+    var bpm = 60 * F / ince;
+    while (bpm < 75) bpm *= 2;
+    while (bpm > 155) bpm /= 2;
+    var simdiki = yt.caliyor ? yt.bpm : (Number($('bpm').value) || 96);
+    if (ritim.tahmin.length && simdiki) {   // ayni oktavda kal (elle ÷2/×2 yapildiysa onu korur)
+      [bpm / 2, bpm * 2].forEach(function (x) { if (Math.abs(Math.log(x / simdiki)) < Math.abs(Math.log(bpm / simdiki))) bpm = x; });
+    }
+    ritim.tahmin.push(bpm);
+    if (ritim.tahmin.length > 5) ritim.tahmin.shift();
+    var sira = ritim.tahmin.slice().sort(function (x, y) { return x - y; });
+    var hedef = sira[Math.floor(sira.length / 2)];
+    var yeniBpm = Math.abs(hedef - simdiki) > 1.2 || ritim.tahmin.length === 1 ? Math.round(hedef * 2) / 2 : simdiki;
+    // faz: son 4 sn'de vuruslarin denk geldigi an
+    var P = 60 * F / yeniBpm, enFaz = 0, enFazS = -1, son = L - 1;
+    for (var p = 0; p < P; p++) {
+      var fs = 0;
+      for (var x = son - p; x > son - F * 4 && x >= 0; x -= P) fs += o[Math.round(x)] || 0;
+      if (fs > enFazS) { enFazS = fs; enFaz = p; }
+    }
+    var sonVurus = ritim.t0 + 1000 * (ritim.n - 1 - enFaz) / F;
+    var periyot = 60 / yeniBpm, faz = (((sonVurus - ref) / 1000) % periyot + periyot) % periyot;
+    if (yt.caliyor) { var degisti = Math.abs(yeniBpm - yt.bpm) > 0.4; yt.bpm = yeniBpm; yt.faz = faz; if (degisti) ytBpmKaydet(); }
+    $('bpm').value = yeniBpm;
+    gonder({ tur: 'halayVurus', bpm: yeniBpm, faz: faz });
+    $('ritimBilgi').textContent = '🎧 Dinleniyor · ' + yeniBpm + ' BPM — kurtlar bu tempoda';
+  }
+
+  // ---------------- kontroller
+  $('durBtn').onclick = durdur;
+  $('sonrakiBtn').onclick = sonraki;
+  $('yenileBtn').onclick = listeYukle;
+  $('otomatik').checked = kayit.otomatik; $('karisik').checked = kayit.karisik;
+  $('otomatik').onchange = function () { kayit.otomatik = this.checked; kaydet(); };
+  $('karisik').onchange = function () { kayit.karisik = this.checked; kaydet(); };
+  $('sesAyar').value = kayit.ses;
+  $('sesAyar').oninput = function () { kayit.ses = Number(this.value); yerel.volume = kayit.ses; if (yt.oyuncu && yt.oyuncu.setVolume) yt.oyuncu.setVolume(Math.round(kayit.ses * 100)); kaydet(); muzikGonder(); };
+  function cikisSec(c) {
+    var gecen = kayit.cikis === 'burada' ? yerel.currentTime : (Date.now() - baslangic) / 1000;
+    kayit.cikis = c; kaydet();
+    $('cikisSahne').className = c === 'sahne' ? 'secili' : ''; $('cikisBurada').className = c === 'burada' ? 'secili' : '';
+    if (calan) {
+      if (c === 'burada') { yerel.src = url(calan); yerel.volume = kayit.ses; yerel.currentTime = gecen; yerel.play(); }
+      else { yerel.pause(); baslangic = Date.now() - gecen * 1000; }
+      muzikGonder();
+    }
+    ortamYerel();
+  }
+  $('cikisSahne').onclick = function () { cikisSec('sahne'); };
+  $('cikisBurada').onclick = function () { cikisSec('burada'); };
+  cikisSec(kayit.cikis);
+
+  $('basiFiyat').value = kayit.fiyat.halaybasi;
+  if (!kayit.hediyeAd.para) kayit.hediyeAd.para = 'Money Gun, Para Tabancası';
+  if (!kayit.begeniKatil) kayit.begeniKatil = 500;
+  $('gulAd').value = kayit.hediyeAd.gul; $('donutAd').value = kayit.hediyeAd.donut; $('cayAd').value = kayit.hediyeAd.cay;
+  $('paraAd').value = kayit.hediyeAd.para; $('begeniKatil').value = kayit.begeniKatil;
+  function ayarGonder() {
+    gonder({ tur: 'halayAyar', halaybasiFiyat: kayit.fiyat.halaybasi, gulAd: kayit.hediyeAd.gul, donutAd: kayit.hediyeAd.donut, cayAd: kayit.hediyeAd.cay, paraAd: kayit.hediyeAd.para, begeniKatil: kayit.begeniKatil });
+  }
+  $('fiyatKaydet').onclick = function () {
+    kayit.fiyat.halaybasi = Number($('basiFiyat').value) || 300;
+    kayit.hediyeAd = { gul: $('gulAd').value, donut: $('donutAd').value, cay: $('cayAd').value, para: $('paraAd').value };
+    kayit.begeniKatil = Math.max(1, Number($('begeniKatil').value) || 500);
+    kaydet(); ayarGonder();
+  };
+  $('damatIndir').onclick = function () { gonder({ tur: 'halayRolKaldir', rol: 'damat' }); };
+  $('gelinIndir').onclick = function () { gonder({ tur: 'halayRolKaldir', rol: 'gelin' }); };
+  $('basiIndir').onclick = function () { gonder({ tur: 'halayRolKaldir', rol: 'halaybasi' }); };
+  $('sifirlaBtn').onclick = function () { if (confirm('Halaydaki herkes, ortadaki oyuncular, alfalar ve halay başı silinsin mi?')) gonder({ tur: 'halaySifirla' }); };
+
+  // ---------------- orman sesleri ve uluma
+  $('ortamAcik').checked = kayit.ortam.acik; $('ortamSes').value = kayit.ortam.ses; $('efektSes').value = kayit.ortam.efekt;
+  function ortamGonder() { gonder({ tur: 'halayAmbiyans', acik: kayit.ortam.acik, ses: kayit.ortam.ses, efekt: kayit.ortam.efekt }); }
+  function ortamYerel() {   // ses bu sayfadaysa orman sesi de burada calar
+    if (!window.HalaySes) return;
+    HalaySes.seviye(kayit.ortam.efekt);
+    HalaySes.ortam(kayit.ortam.acik && kayit.cikis === 'burada', kayit.ortam.ses);
+  }
+  function ortamDegisti() {
+    kayit.ortam = { acik: $('ortamAcik').checked, ses: Number($('ortamSes').value), efekt: Number($('efektSes').value) };
+    kaydet(); ortamGonder(); ortamYerel();
+  }
+  $('ortamAcik').onchange = ortamDegisti;
+  $('ortamSes').onchange = ortamDegisti;
+  $('efektSes').onchange = ortamDegisti;
+  $('uluBtn').onclick = function () { gonder({ tur: 'halayUluIste' }); };
+  // tarayici sesi ilk tiklamada acar
+  document.addEventListener('click', function () { if (window.HalaySes) HalaySes.devam().then(ortamYerel, function () { }); }, true);
+
+  // ---------------- test
+  var testAdlari = ['Ayşe', 'Mehmet', 'Zeynep', 'Emre', 'Elif', 'Burak', 'Selin', 'Can', 'Derya', 'Kaan', 'Merve', 'Oğuz', 'Buse', 'Hakan'];
+  var testNo = 0;
+  function testKisi() { testNo++; var ad = testAdlari[testNo % testAdlari.length] + ' ' + testNo; return { kullanici: 'test_' + testNo, isim: ad }; }
+  function testHediye(k, hediye, jeton) { gonder({ tur: 'hediye', test: true, kullanici: k.kullanici, isim: k.isim, avatar: '', hediye: hediye, adet: 1, jeton: jeton }); }
+  var sonTest = null, sonDonut = null, sonHediyeler = [];
+  document.querySelectorAll('[data-test]').forEach(function (b) {
+    b.onclick = function () {
+      var t = b.getAttribute('data-test');
+      if (t === 'gul') testHediye(sonTest = testKisi(), 'Rose', 1);
+      else if (t === 'donut') testHediye(sonDonut = sonTest = testKisi(), 'Doughnut', 30);
+      else if (t === 'donut2') testHediye(sonDonut || (sonDonut = testKisi()), 'Doughnut', 30);
+      else if (t === 'buyuk') testHediye(sonTest = testKisi(), 'Havai Fişek', 500);
+      else if (t === 'basi') { var k0 = testKisi(); gonder({ tur: 'yorum', test: true, kullanici: k0.kullanici, isim: k0.isim, metin: 'halay başı benim' }); testHediye(k0, 'Rose', 1); testHediye(k0, 'Kaykay', kayit.fiyat.halaybasi); }
+      else if (t === 'damat') { var k1 = testKisi(); gonder({ tur: 'yorum', test: true, kullanici: k1.kullanici, isim: k1.isim, metin: 'alfa kurt olcam' }); testHediye(k1, 'Tea', 50); }
+      else if (t === 'gelin') { var k2 = testKisi(); gonder({ tur: 'yorum', test: true, kullanici: k2.kullanici, isim: k2.isim, metin: 'leydi alfa benim' }); testHediye(k2, 'Tea', 50); }
+      else if (t === 'kalabalik') { for (var i = 0; i < 10; i++) (function (i) { setTimeout(function () { testHediye(testKisi(), 'Rose', 1); }, i * 400); })(i); }
+      else if (t === 'begeni500') { var kb = testKisi(); for (var bi = 0; bi < 5; bi++) gonder({ tur: 'begeni', test: true, kullanici: kb.kullanici, isim: kb.isim, adet: Math.ceil(kayit.begeniKatil / 5) }); }
+      else if (t === 'para') { var kp = sonTest || testKisi(); testHediye(kp, 'Money Gun', 500); }
+      else if (t === 'begeni') gonder({ tur: 'begeni', test: true, kullanici: sonTest ? sonTest.kullanici : 'x', isim: 'x', adet: 5 });
+      else if (t === 'yorum') { var k3 = sonTest || testKisi(); gonder({ tur: 'yorum', test: true, kullanici: k3.kullanici, isim: k3.isim, metin: 'Oyy halay başlasın! 💃' }); }
+    };
+  });
+
+  baglan();
+  listeYukle();
+})();
+</script>
+</body>
+</html>
